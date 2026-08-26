@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>BÚFALOS FC - Lector QR</title>
+
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+
+  margin: 0;
+
+  font-family: Arial, sans-serif;
+
+  background: #111;
+
+  color: white;
+
+}
+
+.header {
+
+  padding: 20px;
+
+  text-align: center;
+
+  font-size: 25px;
+
+  font-weight: bold;
+
+}
+
+.container {
+
+  max-width: 600px;
+
+  margin: auto;
+
+  padding: 15px;
+
+}
+
+.card {
+
+  background: #222;
+
+  border-radius: 15px;
+
+  padding: 20px;
+
+}
+
+button {
+
+  width: 100%;
+
+  padding: 16px;
+
+  border: 0;
+
+  border-radius: 10px;
+
+  font-size: 18px;
+
+  font-weight: bold;
+
+  margin-top: 10px;
+
+}
+
+.start {
+
+  background: #16803c;
+
+  color: white;
+
+}
+
+.stop {
+
+  background: #c62828;
+
+  color: white;
+
+}
+
+#reader {
+
+  width: 100%;
+
+  margin-top: 20px;
+
+}
+
+#resultado {
+
+  margin-top: 20px;
+
+  padding: 18px;
+
+  border-radius: 12px;
+
+  text-align: center;
+
+  font-size: 18px;
+
+  font-weight: bold;
+
+}
+
+.ok {
+
+  background: #16803c;
+
+}
+
+.error {
+
+  background: #b71c1c;
+
+}
+
+.info {
+
+  background: #1565c0;
+
+}
+
+.oculto {
+
+  display: none;
+
+}
+
+#historial {
+
+  margin-top: 20px;
+
+}
+
+.item {
+
+  background: #333;
+
+  padding: 12px;
+
+  margin-top: 8px;
+
+  border-radius: 8px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="header">
+
+🐃 BÚFALOS FC
+
+<br>
+
+📷 LECTOR QR CONTINUO
+
+</div>
+
+
+<div class="container">
+
+<div class="card">
+
+
+<button
+  id="btnIniciar"
+  class="start"
+  onclick="iniciarLector()">
+
+▶️ INICIAR LECTOR
+
+</button>
+
+
+<button
+  id="btnDetener"
+  class="stop oculto"
+  onclick="detenerLector()">
+
+⏹️ DETENER LECTOR
+
+</button>
+
+
+<div id="reader"></div>
+
+
+<div
+  id="resultado"
+  class="info">
+
+Pulsa INICIAR LECTOR para comenzar.
+
+</div>
+
+
+<div id="historial">
+
+<h3>Últimos registros</h3>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<script>
+
+
+/* =================================
+   CONFIGURACIÓN
+================================= */
+
+
+const URL_APPS_SCRIPT =
+'https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec';
+
+
+let lector = null;
+
+let lectorActivo = false;
+
+let procesando = false;
+
+let ultimoCodigo = '';
+
+let ultimoTiempo = 0;
+
+
+/* =================================
+   INICIAR LECTOR
+================================= */
+
+function iniciarLector() {
+
+
+  if (lectorActivo) {
+    return;
+  }
+
+
+  mostrar(
+    '📷 Solicitando acceso a la cámara...',
+    'info'
+  );
+
+
+  lector =
+    new Html5Qrcode('reader');
+
+
+  Html5Qrcode
+    .getCameras()
+
+
+    .then(function(camaras) {
+
+
+      if (
+        !camaras ||
+        camaras.length === 0
+      ) {
+
+        throw new Error(
+          'No se encontró una cámara.'
+        );
+
+      }
+
+
+      let camara = camaras[0].id;
+
+
+      /*
+       Buscar cámara trasera
+      */
+
+      for (
+        let i = 0;
+        i < camaras.length;
+        i++
+      ) {
+
+        const nombre =
+          (
+            camaras[i].label ||
+            ''
+          ).toLowerCase();
+
+
+        if (
+          nombre.includes('back') ||
+          nombre.includes('rear') ||
+          nombre.includes('trasera')
+        ) {
+
+          camara =
+            camaras[i].id;
+
+          break;
+
+        }
+
+      }
+
+
+      return lector.start(
+
+        camara,
+
+        {
+          fps: 10,
+
+          qrbox: {
+            width: 250,
+            height: 250
+          }
+        },
+
+        function(codigo) {
+
+          codigoEncontrado(codigo);
+
+        },
+
+        function(error) {
+
+          /*
+           No mostrar errores normales
+           mientras busca el QR.
+          */
+
+        }
+
+      );
+
+    })
+
+
+    .then(function() {
+
+
+      lectorActivo =
+        true;
+
+
+      document
+        .getElementById(
+          'btnIniciar'
+        )
+        .classList.add(
+          'oculto'
+        );
+
+
+      document
+        .getElementById(
+          'btnDetener'
+        )
+        .classList.remove(
+          'oculto'
+        );
+
+
+      mostrar(
+        '📷 Lector activo. Escanea un carnet.',
+        'info'
+      );
+
+    })
+
+
+    .catch(function(error) {
+
+
+      console.error(
+        error
+      );
+
+
+      mostrar(
+        '❌ No se pudo abrir la cámara: ' +
+        (
+          error.name ||
+          error.message ||
+          error
+        ),
+        'error'
+      );
+
+
+      lector = null;
+
+    });
+
+}
+
+
+/* =================================
+   QR DETECTADO
+================================= */
+
+function codigoEncontrado(
+  codigo
+) {
+
+
+  codigo =
+    String(codigo)
+      .trim();
+
+
+  if (!codigo) {
+    return;
+  }
+
+
+  const ahora =
+    Date.now();
+
+
+  /*
+   Evitar múltiples lecturas
+   del mismo QR consecutivamente.
+  */
+
+  if (
+    codigo === ultimoCodigo &&
+    ahora - ultimoTiempo < 5000
+  ) {
+
+    return;
+
+  }
+
+
+  ultimoCodigo =
+    codigo;
+
+  ultimoTiempo =
+    ahora;
+
+
+  if (procesando) {
+    return;
+  }
+
+
+  procesando =
+    true;
+
+
+  mostrar(
+    '🔎 Código detectado: ' +
+    codigo +
+    '<br>Consultando jugador...',
+    'info'
+  );
+
+
+  enviarCodigo(
+    codigo
+  );
+
+}
+
+
+/* =================================
+   ENVIAR A APPS SCRIPT
+================================= */
+
+function enviarCodigo(
+  codigo
+) {
+
+
+  const url =
+    URL_APPS_SCRIPT +
+    '?accion=qr&codigo=' +
+    encodeURIComponent(codigo);
+
+
+  fetch(url)
+
+    .then(function(respuesta) {
+
+      return respuesta.json();
+
+    })
+
+
+    .then(function(datos) {
+
+
+      if (
+        datos.ok &&
+        datos.encontrado
+      ) {
+
+
+        if (
+          datos.duplicate
+        ) {
+
+
+          mostrar(
+            '⚠️ ' +
+            datos.nombre +
+            '<br>Ya tenía asistencia hoy.',
+            'info'
+          );
+
+
+        } else {
+
+
+          mostrar(
+            '✅ ' +
+            datos.nombre +
+            '<br>' +
+            (
+              datos.categoria ||
+              ''
+            ) +
+            '<br>Asistencia registrada a las ' +
+            (
+              datos.hora ||
+              ''
+            ),
+            'ok'
+          );
+
+
+          agregarHistorial(
+            datos
+          );
+
+
+          hacerSonido();
+
+        }
+
+
+      } else {
+
+
+        mostrar(
+          '❌ ' +
+          (
+            datos.mensaje ||
+            'Jugador no encontrado'
+          ),
+          'error'
+        );
+
+
+        hacerSonidoError();
+
+      }
+
+
+      /*
+       Después de procesar,
+       queda listo para el siguiente QR.
+      */
+
+      setTimeout(function() {
+
+        procesando =
+          false;
+
+        mostrar(
+          '📷 Listo. Escanea el siguiente carnet.',
+          'info'
+        );
+
+      }, 1800);
+
+    })
+
+
+    .catch(function(error) {
+
+
+      console.error(
+        error
+      );
+
+
+      mostrar(
+        '❌ Error de comunicación con BÚFALOS FC.',
+        'error'
+      );
+
+
+      procesando =
+        false;
+
+    });
+
+}
+
+
+/* =================================
+   HISTORIAL
+================================= */
+
+function agregarHistorial(
+  datos
+) {
+
+
+  const historial =
+    document.getElementById(
+      'historial'
+    );
+
+
+  const elemento =
+    document.createElement(
+      'div'
+    );
+
+
+  elemento.className =
+    'item';
+
+
+  elemento.innerHTML =
+
+    '✅ <strong>' +
+    datos.nombre +
+    '</strong><br>' +
+
+    (
+      datos.categoria ||
+      ''
+    ) +
+
+    '<br>' +
+
+    'Hora: ' +
+    (
+      datos.hora ||
+      ''
+    );
+
+
+  historial
+    .insertBefore(
+      elemento,
+      historial.children[1]
+    );
+
+}
+
+
+/* =================================
+   DETENER
+================================= */
+
+function detenerLector() {
+
+
+  if (!lector) {
+    return;
+  }
+
+
+  lector
+    .stop()
+
+
+    .then(function() {
+
+
+      lector.clear();
+
+
+      lector =
+        null;
+
+
+      lectorActivo =
+        false;
+
+
+      document
+        .getElementById(
+          'btnDetener'
+        )
+        .classList.add(
+          'oculto'
+        );
+
+
+      document
+        .getElementById(
+          'btnIniciar'
+        )
+        .classList.remove(
+          'oculto'
+        );
+
+
+      mostrar(
+        'Lector detenido.',
+        'info'
+      );
+
+    })
+
+
+    .catch(function(error) {
+
+      console.error(
+        error
+      );
+
+    });
+
+}
+
+
+/* =================================
+   MENSAJES
+================================= */
+
+function mostrar(
+  texto,
+  tipo
+) {
+
+
+  const elemento =
+    document.getElementById(
+      'resultado'
+    );
+
+
+  elemento.className =
+    tipo;
+
+
+  elemento.innerHTML =
+    texto;
+
+}
+
+
+/* =================================
+   SONIDOS
+================================= */
+
+function hacerSonido() {
+
+  try {
+
+    const contexto =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+
+    const oscilador =
+      contexto.createOscillator();
+
+
+    const ganancia =
+      contexto.createGain();
+
+
+    oscilador.connect(
+      ganancia
+    );
+
+
+    ganancia.connect(
+      contexto.destination
+    );
+
+
+    oscilador.frequency.value =
+      900;
+
+
+    ganancia.gain.value =
+      0.15;
+
+
+    oscilador.start();
+
+
+    oscilador.stop(
+      contexto.currentTime +
+      0.15
+    );
+
+  }
+
+  catch(e) {}
+
+}
+
+
+function hacerSonidoError() {
+
+  try {
+
+    const contexto =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+
+    const oscilador =
+      contexto.createOscillator();
+
+
+    const ganancia =
+      contexto.createGain();
+
+
+    oscilador.connect(
+      ganancia
+    );
+
+
+    ganancia.connect(
+      contexto.destination
+    );
+
+
+    oscilador.frequency.value =
+      250;
+
+
+    ganancia.gain.value =
+      0.15;
+
+
+    oscilador.start();
+
+
+    oscilador.stop(
+      contexto.currentTime +
+      0.25
+    );
+
+  }
+
+  catch(e) {}
+
+}
+
+
+</script>
+
+</body>
+
+</html>
