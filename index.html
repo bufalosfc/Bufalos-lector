@@ -2,206 +2,193 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8">
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
 
-  <title>BÚFALOS FC - Lector QR</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-  <!-- LECTOR QR -->
-  <script src="https://unpkg.com/html5-qrcode"
-          type="text/javascript"></script>
+<title>BÚFALOS FC - Lector QR</title>
 
-  <style>
+<script src="https://unpkg.com/html5-qrcode"
+        type="text/javascript"></script>
 
-    * {
-      box-sizing: border-box;
-    }
+<style>
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    .encabezado {
-      background: #000;
-      padding: 20px;
-      text-align: center;
-      font-size: 25px;
-      font-weight: bold;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+}
 
-    .contenedor {
-      max-width: 600px;
-      margin: auto;
-      padding: 15px;
-    }
+.encabezado {
+  background: #000;
+  padding: 20px;
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+}
 
-    .tarjeta {
-      background: #222;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 3px 12px rgba(0,0,0,.4);
-    }
+.contenedor {
+  max-width: 600px;
+  margin: auto;
+  padding: 15px;
+}
 
-    button {
-      width: 100%;
-      padding: 16px;
-      border: 0;
-      border-radius: 10px;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 10px;
-      cursor: pointer;
-    }
+.tarjeta {
+  background: #222;
+  border-radius: 16px;
+  padding: 20px;
+}
 
-    .verde {
-      background: #16803c;
-      color: white;
-    }
+button {
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
 
-    .rojo {
-      background: #c62828;
-      color: white;
-    }
+.verde {
+  background: #16803c;
+  color: white;
+}
 
-    .azul {
-      background: #1565c0;
-      color: white;
-    }
+.rojo {
+  background: #c62828;
+  color: white;
+}
 
-    .oculto {
-      display: none !important;
-    }
+.oculto {
+  display: none !important;
+}
 
-    #reader {
-      width: 100%;
-      margin-top: 20px;
-      overflow: hidden;
-      border-radius: 12px;
-    }
+#reader {
+  width: 100%;
+  margin-top: 20px;
+  overflow: hidden;
+  border-radius: 12px;
+}
 
-    #resultado {
-      margin-top: 20px;
-      padding: 18px;
-      border-radius: 12px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
+#resultado {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+}
 
-    .info {
-      background: #1565c0;
-    }
+.info {
+  background: #1565c0;
+}
 
-    .ok {
-      background: #16803c;
-    }
+.ok {
+  background: #16803c;
+}
 
-    .error {
-      background: #b71c1c;
-    }
+.error {
+  background: #b71c1c;
+}
 
-    .jugador {
-      font-size: 23px;
-      margin-bottom: 8px;
-    }
+.jugador {
+  font-size: 23px;
+  margin-bottom: 8px;
+}
 
-    .historial {
-      margin-top: 20px;
-    }
+.historial {
+  margin-top: 20px;
+}
 
-    .registro {
-      background: #333;
-      padding: 13px;
-      margin-top: 8px;
-      border-radius: 10px;
-    }
+.registro {
+  background: #333;
+  padding: 13px;
+  margin-top: 8px;
+  border-radius: 10px;
+}
 
-    .pequeno {
-      font-size: 14px;
-      opacity: .8;
-    }
-
-  </style>
+</style>
 
 </head>
 
+
 <body>
+
 
 <div class="encabezado">
 
-  🐃 BÚFALOS FC
+🐃 BÚFALOS FC
 
-  <br>
+<br>
 
-  📷 LECTOR DE ASISTENCIA
+📷 LECTOR DE ASISTENCIA
 
 </div>
 
 
 <div class="contenedor">
 
-  <div class="tarjeta">
-
-    <button
-      id="btnIniciar"
-      class="verde"
-      onclick="iniciarLector()">
-
-      ▶️ INICIAR LECTOR
-
-    </button>
+<div class="tarjeta">
 
 
-    <button
-      id="btnDetener"
-      class="rojo oculto"
-      onclick="detenerLector()">
+<button
+  id="btnIniciar"
+  class="verde"
+  onclick="iniciarLector()">
 
-      ⏹️ DETENER LECTOR
+▶️ INICIAR LECTOR
 
-    </button>
-
-
-    <div id="reader"></div>
+</button>
 
 
-    <div
-      id="resultado"
-      class="info">
+<button
+  id="btnDetener"
+  class="rojo oculto"
+  onclick="detenerLector()">
 
-      Pulsa INICIAR LECTOR para comenzar.
+⏹️ DETENER LECTOR
 
-    </div>
+</button>
 
 
-    <div class="historial">
+<div id="reader"></div>
 
-      <h3>📋 Últimas asistencias</h3>
 
-      <div id="listaHistorial"></div>
+<div id="resultado"
+     class="info">
 
-    </div>
+Pulsa INICIAR LECTOR para comenzar.
 
-  </div>
+</div>
+
+
+<div class="historial">
+
+<h3>📋 Últimas asistencias</h3>
+
+<div id="listaHistorial"></div>
+
+</div>
+
+
+</div>
 
 </div>
 
 
 <script>
 
-/* =====================================================
-   CONFIGURACIÓN
-===================================================== */
 
-/*
-   ESTE ES EL GOOGLE APPS SCRIPT
-   QUE YA ESTAMOS UTILIZANDO PARA BÚFALOS FC.
-*/
+/* =====================================================
+   GOOGLE APPS SCRIPT DE BÚFALOS FC
+===================================================== */
 
 const URL_APPS_SCRIPT =
 'https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec';
@@ -230,7 +217,7 @@ function iniciarLector() {
 
 
   mostrar(
-    '📷 Solicitando permiso para utilizar la cámara...',
+    '📷 Solicitando acceso a la cámara...',
     'info'
   );
 
@@ -239,129 +226,212 @@ function iniciarLector() {
     new Html5Qrcode('reader');
 
 
-  Html5Qrcode.getCameras()
+  /*
+    IMPORTANTE:
 
-    .then(function(camaras) {
+    Ahora NO utilizamos getCameras().
 
-      if (!camaras || camaras.length === 0) {
+    Le pedimos directamente al navegador
+    la cámara trasera.
+  */
 
-        throw new Error(
-          'No se encontró ninguna cámara.'
-        );
 
+  lector.start(
+
+    {
+      facingMode: {
+        exact: "environment"
       }
+    },
 
+    {
+
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      },
+
+      aspectRatio: 1.0
+
+    },
+
+    function(codigo) {
+
+      codigoEncontrado(codigo);
+
+    },
+
+    function(error) {
 
       /*
-        Primero intentamos encontrar
-        la cámara trasera.
+        Errores normales mientras busca
+        un código QR.
+
+        No hacemos nada aquí.
       */
 
-      let camaraSeleccionada =
-        camaras[0].id;
+    }
+
+  )
+
+  .then(function() {
+
+    lectorActivo = true;
 
 
-      for (
-        let i = 0;
-        i < camaras.length;
-        i++
-      ) {
-
-        const nombre =
-          String(
-            camaras[i].label || ''
-          ).toLowerCase();
+    document
+      .getElementById('btnIniciar')
+      .classList.add('oculto');
 
 
-        if (
-          nombre.includes('back') ||
-          nombre.includes('rear') ||
-          nombre.includes('trasera') ||
-          nombre.includes('environment')
-        ) {
-
-          camaraSeleccionada =
-            camaras[i].id;
-
-          break;
-
-        }
-
-      }
+    document
+      .getElementById('btnDetener')
+      .classList.remove('oculto');
 
 
-      return lector.start(
+    mostrar(
+      '📷 Lector activo.<br><br>' +
+      'Presenta el QR del carnet.',
+      'info'
+    );
 
-        camaraSeleccionada,
-
-        {
-          fps: 10,
-
-          qrbox: {
-            width: 250,
-            height: 250
-          }
-
-        },
-
-        function(codigo) {
-
-          codigoEncontrado(codigo);
-
-        },
-
-        function(error) {
-
-          /*
-            Los errores normales de búsqueda
-            del QR no se muestran.
-          */
-
-        }
-
-      );
-
-    })
+  })
 
 
-    .then(function() {
+  .catch(function(error) {
 
-      lectorActivo = true;
-
-
-      document
-        .getElementById('btnIniciar')
-        .classList.add('oculto');
+    console.error(
+      'ERROR DE CÁMARA:',
+      error
+    );
 
 
-      document
-        .getElementById('btnDetener')
-        .classList.remove('oculto');
+    /*
+      Si exact: environment falla,
+      hacemos un segundo intento
+      con environment normal.
+    */
+
+    iniciarCamaraAlternativa();
+
+  });
+
+}
 
 
-      mostrar(
-        '📷 Lector activo.<br>Presenta el QR del carnet.',
-        'info'
-      );
+/* =====================================================
+   SEGUNDO INTENTO DE CÁMARA
+===================================================== */
 
-    })
+function iniciarCamaraAlternativa() {
 
-
-    .catch(function(error) {
-
-      console.error(error);
-
-
-      mostrar(
-        '❌ No se pudo abrir la cámara.<br><br>' +
-        'Revisa que el navegador tenga permiso para usar la cámara.',
-        'error'
-      );
+  if (!lector) {
+    lector =
+      new Html5Qrcode('reader');
+  }
 
 
-      lector = null;
+  mostrar(
+    '📷 Intentando abrir la cámara trasera...',
+    'info'
+  );
 
-    });
+
+  lector.start(
+
+    {
+      facingMode: "environment"
+    },
+
+    {
+
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      },
+
+      aspectRatio: 1.0
+
+    },
+
+    function(codigo) {
+
+      codigoEncontrado(codigo);
+
+    },
+
+    function(error) {
+
+      /*
+        No mostramos errores normales.
+      */
+
+    }
+
+  )
+
+  .then(function() {
+
+    lectorActivo = true;
+
+
+    document
+      .getElementById('btnIniciar')
+      .classList.add('oculto');
+
+
+    document
+      .getElementById('btnDetener')
+      .classList.remove('oculto');
+
+
+    mostrar(
+      '📷 Lector activo.<br><br>' +
+      'Presenta el QR del carnet.',
+      'info'
+    );
+
+  })
+
+
+  .catch(function(error) {
+
+    console.error(
+      'ERROR FINAL DE CÁMARA:',
+      error
+    );
+
+
+    let mensaje =
+      '❌ No se pudo abrir la cámara.';
+
+
+    if (
+      error &&
+      error.name
+    ) {
+
+      mensaje +=
+        '<br><br>' +
+        'Código: ' +
+        error.name;
+
+    }
+
+
+    mostrar(
+      mensaje,
+      'error'
+    );
+
+
+    lector = null;
+
+  });
 
 }
 
@@ -381,12 +451,13 @@ function codigoEncontrado(codigo) {
   }
 
 
-  const ahora = Date.now();
+  const ahora =
+    Date.now();
 
 
   /*
-    Evitar que el mismo QR se lea
-    muchas veces seguidas.
+    Evita leer el mismo QR
+    varias veces seguidas.
   */
 
   if (
@@ -399,9 +470,11 @@ function codigoEncontrado(codigo) {
   }
 
 
-  ultimoCodigo = codigo;
+  ultimoCodigo =
+    codigo;
 
-  ultimoTiempo = ahora;
+  ultimoTiempo =
+    ahora;
 
 
   if (procesando) {
@@ -413,7 +486,8 @@ function codigoEncontrado(codigo) {
 
 
   mostrar(
-    '🔎 QR detectado.<br>Consultando jugador...',
+    '🔎 QR detectado.<br>' +
+    'Consultando jugador...',
     'info'
   );
 
@@ -424,25 +498,20 @@ function codigoEncontrado(codigo) {
 
 
 /* =====================================================
-   CONSULTAR JUGADOR
+   OBTENER ID DEL QR
 ===================================================== */
 
 function consultarJugador(codigo) {
 
+  let jugadorID =
+    codigo;
+
+
   /*
-    El QR puede contener:
-
-    BFC-001
-
-    o una dirección como:
-
-    ...?jugador=BFC-001
-
-    Vamos a intentar obtener el ID.
+    Si el QR contiene el enlace completo
+    del carnet, extraemos solamente
+    el ID del jugador.
   */
-
-  let jugadorID = codigo;
-
 
   try {
 
@@ -453,18 +522,20 @@ function consultarJugador(codigo) {
       const url =
         new URL(codigo);
 
+
       jugadorID =
-        url.searchParams.get('jugador') ||
-        codigo;
+        url.searchParams.get(
+          'jugador'
+        ) || codigo;
 
     }
 
   }
 
-  catch(e) {
+  catch(error) {
 
     console.log(
-      'El QR no es una URL. Se utilizará como ID.'
+      'QR recibido como texto.'
     );
 
   }
@@ -475,7 +546,9 @@ function consultarJugador(codigo) {
       .trim();
 
 
-  registrarAsistencia(jugadorID);
+  registrarAsistencia(
+    jugadorID
+  );
 
 }
 
@@ -484,12 +557,16 @@ function consultarJugador(codigo) {
    REGISTRAR ASISTENCIA
 ===================================================== */
 
-function registrarAsistencia(jugadorID) {
+function registrarAsistencia(
+  jugadorID
+) {
 
   const url =
     URL_APPS_SCRIPT +
     '?accion=qr&codigo=' +
-    encodeURIComponent(jugadorID);
+    encodeURIComponent(
+      jugadorID
+    );
 
 
   fetch(url)
@@ -499,10 +576,11 @@ function registrarAsistencia(jugadorID) {
       if (!respuesta.ok) {
 
         throw new Error(
-          'Error de comunicación con el servidor.'
+          'Error de comunicación.'
         );
 
       }
+
 
       return respuesta.json();
 
@@ -511,8 +589,9 @@ function registrarAsistencia(jugadorID) {
 
     .then(function(datos) {
 
+
       console.log(
-        'Respuesta:',
+        'Respuesta BÚFALOS:',
         datos
       );
 
@@ -528,7 +607,7 @@ function registrarAsistencia(jugadorID) {
 
 
         /*
-          YA TENÍA ASISTENCIA
+          DUPLICADO
         */
 
         if (
@@ -540,7 +619,12 @@ function registrarAsistencia(jugadorID) {
             '⚠️<br>' +
 
             '<div class="jugador">' +
-            datos.nombre +
+
+            (
+              datos.nombre ||
+              ''
+            ) +
+
             '</div>' +
 
             'Ya tenía asistencia registrada hoy.',
@@ -553,7 +637,7 @@ function registrarAsistencia(jugadorID) {
 
 
         /*
-          ASISTENCIA NUEVA
+          NUEVA ASISTENCIA
         */
 
         else {
@@ -563,7 +647,12 @@ function registrarAsistencia(jugadorID) {
             '✅<br>' +
 
             '<div class="jugador">' +
-            datos.nombre +
+
+            (
+              datos.nombre ||
+              ''
+            ) +
+
             '</div>' +
 
             (
@@ -576,6 +665,7 @@ function registrarAsistencia(jugadorID) {
             'Asistencia registrada<br>' +
 
             '🕐 ' +
+
             (
               datos.hora ||
               ''
@@ -599,7 +689,7 @@ function registrarAsistencia(jugadorID) {
 
 
       /*
-        JUGADOR NO ENCONTRADO
+        NO ENCONTRADO
       */
 
       else {
@@ -624,8 +714,7 @@ function registrarAsistencia(jugadorID) {
 
 
       /*
-        Después de unos segundos
-        queda listo para el siguiente.
+        Preparar siguiente QR.
       */
 
       setTimeout(function() {
@@ -649,13 +738,14 @@ function registrarAsistencia(jugadorID) {
 
     .catch(function(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
 
       mostrar(
 
-        '❌ No se pudo comunicar con BÚFALOS FC.<br><br>' +
-        error.message,
+        '❌ Error de comunicación con BÚFALOS FC.',
 
         'error'
 
@@ -673,7 +763,9 @@ function registrarAsistencia(jugadorID) {
    HISTORIAL
 ===================================================== */
 
-function agregarHistorial(datos) {
+function agregarHistorial(
+  datos
+) {
 
   const lista =
     document.getElementById(
@@ -707,9 +799,7 @@ function agregarHistorial(datos) {
       ''
     ) +
 
-    '<br>' +
-
-    '🕐 ' +
+    '<br>🕐 ' +
 
     (
       datos.hora ||
@@ -723,7 +813,7 @@ function agregarHistorial(datos) {
 
 
   /*
-    Máximo 10 registros visibles.
+    Mantener máximo 10.
   */
 
   while (
@@ -784,7 +874,9 @@ function detenerLector() {
 
     .catch(function(error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     });
 
@@ -795,7 +887,10 @@ function detenerLector() {
    MENSAJES
 ===================================================== */
 
-function mostrar(texto, tipo) {
+function mostrar(
+  texto,
+  tipo
+) {
 
   const elemento =
     document.getElementById(
@@ -858,7 +953,8 @@ function sonidoCorrecto() {
 
 
     oscilador.stop(
-      contexto.currentTime + 0.15
+      contexto.currentTime +
+      0.15
     );
 
   }
@@ -906,14 +1002,15 @@ function sonidoError() {
 
 
     ganancia.gain.value =
-      0.25;
+      0.20;
 
 
     oscilador.start();
 
 
     oscilador.stop(
-      contexto.currentTime + 0.25
+      contexto.currentTime +
+      0.25
     );
 
   }
