@@ -2,241 +2,206 @@
 <html lang="es">
 
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>BÚFALOS FC - Lector QR</title>
-
-<script src="https://unpkg.com/html5-qrcode"
-        type="text/javascript"></script>
-
-<style>
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-
-  margin: 0;
-
-  font-family: Arial, sans-serif;
-
-  background: #111;
-
-  color: white;
-
-}
-
-.header {
-
-  padding: 20px;
-
-  text-align: center;
-
-  font-size: 25px;
-
-  font-weight: bold;
-
-}
-
-.container {
-
-  max-width: 600px;
-
-  margin: auto;
-
-  padding: 15px;
-
-}
-
-.card {
-
-  background: #222;
-
-  border-radius: 15px;
-
-  padding: 20px;
-
-}
-
-button {
-
-  width: 100%;
-
-  padding: 16px;
-
-  border: 0;
-
-  border-radius: 10px;
-
-  font-size: 18px;
-
-  font-weight: bold;
-
-  margin-top: 10px;
-
-}
-
-.start {
-
-  background: #16803c;
-
-  color: white;
-
-}
-
-.stop {
-
-  background: #c62828;
-
-  color: white;
-
-}
-
-#reader {
-
-  width: 100%;
-
-  margin-top: 20px;
-
-}
-
-#resultado {
-
-  margin-top: 20px;
-
-  padding: 18px;
-
-  border-radius: 12px;
-
-  text-align: center;
-
-  font-size: 18px;
-
-  font-weight: bold;
-
-}
-
-.ok {
-
-  background: #16803c;
-
-}
-
-.error {
-
-  background: #b71c1c;
-
-}
-
-.info {
-
-  background: #1565c0;
-
-}
-
-.oculto {
-
-  display: none;
-
-}
-
-#historial {
-
-  margin-top: 20px;
-
-}
-
-.item {
-
-  background: #333;
-
-  padding: 12px;
-
-  margin-top: 8px;
-
-  border-radius: 8px;
-
-}
-
-</style>
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>BÚFALOS FC - Lector QR</title>
+
+  <!-- LECTOR QR -->
+  <script src="https://unpkg.com/html5-qrcode"
+          type="text/javascript"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+    }
+
+    .encabezado {
+      background: #000;
+      padding: 20px;
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+    }
+
+    .contenedor {
+      max-width: 600px;
+      margin: auto;
+      padding: 15px;
+    }
+
+    .tarjeta {
+      background: #222;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.4);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      border: 0;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .verde {
+      background: #16803c;
+      color: white;
+    }
+
+    .rojo {
+      background: #c62828;
+      color: white;
+    }
+
+    .azul {
+      background: #1565c0;
+      color: white;
+    }
+
+    .oculto {
+      display: none !important;
+    }
+
+    #reader {
+      width: 100%;
+      margin-top: 20px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    #resultado {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .info {
+      background: #1565c0;
+    }
+
+    .ok {
+      background: #16803c;
+    }
+
+    .error {
+      background: #b71c1c;
+    }
+
+    .jugador {
+      font-size: 23px;
+      margin-bottom: 8px;
+    }
+
+    .historial {
+      margin-top: 20px;
+    }
+
+    .registro {
+      background: #333;
+      padding: 13px;
+      margin-top: 8px;
+      border-radius: 10px;
+    }
+
+    .pequeno {
+      font-size: 14px;
+      opacity: .8;
+    }
+
+  </style>
 
 </head>
 
 <body>
 
+<div class="encabezado">
 
-<div class="header">
+  🐃 BÚFALOS FC
 
-🐃 BÚFALOS FC
+  <br>
 
-<br>
-
-📷 LECTOR QR CONTINUO
-
-</div>
-
-
-<div class="container">
-
-<div class="card">
-
-
-<button
-  id="btnIniciar"
-  class="start"
-  onclick="iniciarLector()">
-
-▶️ INICIAR LECTOR
-
-</button>
-
-
-<button
-  id="btnDetener"
-  class="stop oculto"
-  onclick="detenerLector()">
-
-⏹️ DETENER LECTOR
-
-</button>
-
-
-<div id="reader"></div>
-
-
-<div
-  id="resultado"
-  class="info">
-
-Pulsa INICIAR LECTOR para comenzar.
+  📷 LECTOR DE ASISTENCIA
 
 </div>
 
 
-<div id="historial">
+<div class="contenedor">
 
-<h3>Últimos registros</h3>
+  <div class="tarjeta">
 
-</div>
+    <button
+      id="btnIniciar"
+      class="verde"
+      onclick="iniciarLector()">
+
+      ▶️ INICIAR LECTOR
+
+    </button>
 
 
-</div>
+    <button
+      id="btnDetener"
+      class="rojo oculto"
+      onclick="detenerLector()">
+
+      ⏹️ DETENER LECTOR
+
+    </button>
+
+
+    <div id="reader"></div>
+
+
+    <div
+      id="resultado"
+      class="info">
+
+      Pulsa INICIAR LECTOR para comenzar.
+
+    </div>
+
+
+    <div class="historial">
+
+      <h3>📋 Últimas asistencias</h3>
+
+      <div id="listaHistorial"></div>
+
+    </div>
+
+  </div>
 
 </div>
 
 
 <script>
 
-
-/* =================================
+/* =====================================================
    CONFIGURACIÓN
-================================= */
+===================================================== */
 
+/*
+   ESTE ES EL GOOGLE APPS SCRIPT
+   QUE YA ESTAMOS UTILIZANDO PARA BÚFALOS FC.
+*/
 
 const URL_APPS_SCRIPT =
 'https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec';
@@ -253,12 +218,11 @@ let ultimoCodigo = '';
 let ultimoTiempo = 0;
 
 
-/* =================================
+/* =====================================================
    INICIAR LECTOR
-================================= */
+===================================================== */
 
 function iniciarLector() {
-
 
   if (lectorActivo) {
     return;
@@ -266,7 +230,7 @@ function iniciarLector() {
 
 
   mostrar(
-    '📷 Solicitando acceso a la cámara...',
+    '📷 Solicitando permiso para utilizar la cámara...',
     'info'
   );
 
@@ -275,31 +239,27 @@ function iniciarLector() {
     new Html5Qrcode('reader');
 
 
-  Html5Qrcode
-    .getCameras()
-
+  Html5Qrcode.getCameras()
 
     .then(function(camaras) {
 
-
-      if (
-        !camaras ||
-        camaras.length === 0
-      ) {
+      if (!camaras || camaras.length === 0) {
 
         throw new Error(
-          'No se encontró una cámara.'
+          'No se encontró ninguna cámara.'
         );
 
       }
 
 
-      let camara = camaras[0].id;
-
-
       /*
-       Buscar cámara trasera
+        Primero intentamos encontrar
+        la cámara trasera.
       */
+
+      let camaraSeleccionada =
+        camaras[0].id;
+
 
       for (
         let i = 0;
@@ -308,19 +268,19 @@ function iniciarLector() {
       ) {
 
         const nombre =
-          (
-            camaras[i].label ||
-            ''
+          String(
+            camaras[i].label || ''
           ).toLowerCase();
 
 
         if (
           nombre.includes('back') ||
           nombre.includes('rear') ||
-          nombre.includes('trasera')
+          nombre.includes('trasera') ||
+          nombre.includes('environment')
         ) {
 
-          camara =
+          camaraSeleccionada =
             camaras[i].id;
 
           break;
@@ -332,7 +292,7 @@ function iniciarLector() {
 
       return lector.start(
 
-        camara,
+        camaraSeleccionada,
 
         {
           fps: 10,
@@ -341,6 +301,7 @@ function iniciarLector() {
             width: 250,
             height: 250
           }
+
         },
 
         function(codigo) {
@@ -352,8 +313,8 @@ function iniciarLector() {
         function(error) {
 
           /*
-           No mostrar errores normales
-           mientras busca el QR.
+            Los errores normales de búsqueda
+            del QR no se muestran.
           */
 
         }
@@ -365,31 +326,21 @@ function iniciarLector() {
 
     .then(function() {
 
-
-      lectorActivo =
-        true;
+      lectorActivo = true;
 
 
       document
-        .getElementById(
-          'btnIniciar'
-        )
-        .classList.add(
-          'oculto'
-        );
+        .getElementById('btnIniciar')
+        .classList.add('oculto');
 
 
       document
-        .getElementById(
-          'btnDetener'
-        )
-        .classList.remove(
-          'oculto'
-        );
+        .getElementById('btnDetener')
+        .classList.remove('oculto');
 
 
       mostrar(
-        '📷 Lector activo. Escanea un carnet.',
+        '📷 Lector activo.<br>Presenta el QR del carnet.',
         'info'
       );
 
@@ -398,19 +349,12 @@ function iniciarLector() {
 
     .catch(function(error) {
 
-
-      console.error(
-        error
-      );
+      console.error(error);
 
 
       mostrar(
-        '❌ No se pudo abrir la cámara: ' +
-        (
-          error.name ||
-          error.message ||
-          error
-        ),
+        '❌ No se pudo abrir la cámara.<br><br>' +
+        'Revisa que el navegador tenga permiso para usar la cámara.',
         'error'
       );
 
@@ -422,18 +366,14 @@ function iniciarLector() {
 }
 
 
-/* =================================
+/* =====================================================
    QR DETECTADO
-================================= */
+===================================================== */
 
-function codigoEncontrado(
-  codigo
-) {
-
+function codigoEncontrado(codigo) {
 
   codigo =
-    String(codigo)
-      .trim();
+    String(codigo || '').trim();
 
 
   if (!codigo) {
@@ -441,13 +381,12 @@ function codigoEncontrado(
   }
 
 
-  const ahora =
-    Date.now();
+  const ahora = Date.now();
 
 
   /*
-   Evitar múltiples lecturas
-   del mismo QR consecutivamente.
+    Evitar que el mismo QR se lea
+    muchas veces seguidas.
   */
 
   if (
@@ -460,11 +399,9 @@ function codigoEncontrado(
   }
 
 
-  ultimoCodigo =
-    codigo;
+  ultimoCodigo = codigo;
 
-  ultimoTiempo =
-    ahora;
+  ultimoTiempo = ahora;
 
 
   if (procesando) {
@@ -472,43 +409,100 @@ function codigoEncontrado(
   }
 
 
-  procesando =
-    true;
+  procesando = true;
 
 
   mostrar(
-    '🔎 Código detectado: ' +
-    codigo +
-    '<br>Consultando jugador...',
+    '🔎 QR detectado.<br>Consultando jugador...',
     'info'
   );
 
 
-  enviarCodigo(
-    codigo
-  );
+  consultarJugador(codigo);
 
 }
 
 
-/* =================================
-   ENVIAR A APPS SCRIPT
-================================= */
+/* =====================================================
+   CONSULTAR JUGADOR
+===================================================== */
 
-function enviarCodigo(
-  codigo
-) {
+function consultarJugador(codigo) {
 
+  /*
+    El QR puede contener:
+
+    BFC-001
+
+    o una dirección como:
+
+    ...?jugador=BFC-001
+
+    Vamos a intentar obtener el ID.
+  */
+
+  let jugadorID = codigo;
+
+
+  try {
+
+    if (
+      codigo.includes('?jugador=')
+    ) {
+
+      const url =
+        new URL(codigo);
+
+      jugadorID =
+        url.searchParams.get('jugador') ||
+        codigo;
+
+    }
+
+  }
+
+  catch(e) {
+
+    console.log(
+      'El QR no es una URL. Se utilizará como ID.'
+    );
+
+  }
+
+
+  jugadorID =
+    String(jugadorID)
+      .trim();
+
+
+  registrarAsistencia(jugadorID);
+
+}
+
+
+/* =====================================================
+   REGISTRAR ASISTENCIA
+===================================================== */
+
+function registrarAsistencia(jugadorID) {
 
   const url =
     URL_APPS_SCRIPT +
     '?accion=qr&codigo=' +
-    encodeURIComponent(codigo);
+    encodeURIComponent(jugadorID);
 
 
   fetch(url)
 
     .then(function(respuesta) {
+
+      if (!respuesta.ok) {
+
+        throw new Error(
+          'Error de comunicación con el servidor.'
+        );
+
+      }
 
       return respuesta.json();
 
@@ -517,6 +511,15 @@ function enviarCodigo(
 
     .then(function(datos) {
 
+      console.log(
+        'Respuesta:',
+        datos
+      );
+
+
+      /*
+        JUGADOR ENCONTRADO
+      */
 
       if (
         datos.ok &&
@@ -524,36 +527,62 @@ function enviarCodigo(
       ) {
 
 
+        /*
+          YA TENÍA ASISTENCIA
+        */
+
         if (
           datos.duplicate
         ) {
 
-
           mostrar(
-            '⚠️ ' +
+
+            '⚠️<br>' +
+
+            '<div class="jugador">' +
             datos.nombre +
-            '<br>Ya tenía asistencia hoy.',
+            '</div>' +
+
+            'Ya tenía asistencia registrada hoy.',
+
             'info'
+
           );
 
+        }
 
-        } else {
 
+        /*
+          ASISTENCIA NUEVA
+        */
+
+        else {
 
           mostrar(
-            '✅ ' +
+
+            '✅<br>' +
+
+            '<div class="jugador">' +
             datos.nombre +
-            '<br>' +
+            '</div>' +
+
             (
               datos.categoria ||
               ''
             ) +
-            '<br>Asistencia registrada a las ' +
+
+            '<br><br>' +
+
+            'Asistencia registrada<br>' +
+
+            '🕐 ' +
             (
               datos.hora ||
               ''
             ),
+
             'ok'
+
           );
 
 
@@ -562,42 +591,55 @@ function enviarCodigo(
           );
 
 
-          hacerSonido();
+          sonidoCorrecto();
 
         }
-
-
-      } else {
-
-
-        mostrar(
-          '❌ ' +
-          (
-            datos.mensaje ||
-            'Jugador no encontrado'
-          ),
-          'error'
-        );
-
-
-        hacerSonidoError();
 
       }
 
 
       /*
-       Después de procesar,
-       queda listo para el siguiente QR.
+        JUGADOR NO ENCONTRADO
+      */
+
+      else {
+
+        mostrar(
+
+          '❌<br>' +
+
+          (
+            datos.mensaje ||
+            'Jugador no encontrado.'
+          ),
+
+          'error'
+
+        );
+
+
+        sonidoError();
+
+      }
+
+
+      /*
+        Después de unos segundos
+        queda listo para el siguiente.
       */
 
       setTimeout(function() {
 
-        procesando =
-          false;
+        procesando = false;
+
 
         mostrar(
-          '📷 Listo. Escanea el siguiente carnet.',
+
+          '📷 Listo.<br>' +
+          'Presenta el siguiente carnet.',
+
           'info'
+
         );
 
       }, 1800);
@@ -607,55 +649,57 @@ function enviarCodigo(
 
     .catch(function(error) {
 
-
-      console.error(
-        error
-      );
+      console.error(error);
 
 
       mostrar(
-        '❌ Error de comunicación con BÚFALOS FC.',
+
+        '❌ No se pudo comunicar con BÚFALOS FC.<br><br>' +
+        error.message,
+
         'error'
+
       );
 
 
-      procesando =
-        false;
+      procesando = false;
 
     });
 
 }
 
 
-/* =================================
+/* =====================================================
    HISTORIAL
-================================= */
+===================================================== */
 
-function agregarHistorial(
-  datos
-) {
+function agregarHistorial(datos) {
 
-
-  const historial =
+  const lista =
     document.getElementById(
-      'historial'
+      'listaHistorial'
     );
 
 
-  const elemento =
+  const registro =
     document.createElement(
       'div'
     );
 
 
-  elemento.className =
-    'item';
+  registro.className =
+    'registro';
 
 
-  elemento.innerHTML =
+  registro.innerHTML =
 
     '✅ <strong>' +
-    datos.nombre +
+
+    (
+      datos.nombre ||
+      ''
+    ) +
+
     '</strong><br>' +
 
     (
@@ -665,68 +709,69 @@ function agregarHistorial(
 
     '<br>' +
 
-    'Hora: ' +
+    '🕐 ' +
+
     (
       datos.hora ||
       ''
     );
 
 
-  historial
-    .insertBefore(
-      elemento,
-      historial.children[1]
+  lista.prepend(
+    registro
+  );
+
+
+  /*
+    Máximo 10 registros visibles.
+  */
+
+  while (
+    lista.children.length > 10
+  ) {
+
+    lista.removeChild(
+      lista.lastChild
     );
+
+  }
 
 }
 
 
-/* =================================
-   DETENER
-================================= */
+/* =====================================================
+   DETENER LECTOR
+===================================================== */
 
 function detenerLector() {
-
 
   if (!lector) {
     return;
   }
 
 
-  lector
-    .stop()
-
+  lector.stop()
 
     .then(function() {
-
 
       lector.clear();
 
 
-      lector =
-        null;
+      lector = null;
 
+      lectorActivo = false;
 
-      lectorActivo =
-        false;
-
-
-      document
-        .getElementById(
-          'btnDetener'
-        )
-        .classList.add(
-          'oculto'
-        );
+      procesando = false;
 
 
       document
-        .getElementById(
-          'btnIniciar'
-        )
-        .classList.remove(
-          'oculto'
-        );
+        .getElementById('btnDetener')
+        .classList.add('oculto');
+
+
+      document
+        .getElementById('btnIniciar')
+        .classList.remove('oculto');
 
 
       mostrar(
@@ -739,24 +784,18 @@ function detenerLector() {
 
     .catch(function(error) {
 
-      console.error(
-        error
-      );
+      console.error(error);
 
     });
 
 }
 
 
-/* =================================
+/* =====================================================
    MENSAJES
-================================= */
+===================================================== */
 
-function mostrar(
-  texto,
-  tipo
-) {
-
+function mostrar(texto, tipo) {
 
   const elemento =
     document.getElementById(
@@ -774,11 +813,11 @@ function mostrar(
 }
 
 
-/* =================================
-   SONIDOS
-================================= */
+/* =====================================================
+   SONIDO CORRECTO
+===================================================== */
 
-function hacerSonido() {
+function sonidoCorrecto() {
 
   try {
 
@@ -819,8 +858,7 @@ function hacerSonido() {
 
 
     oscilador.stop(
-      contexto.currentTime +
-      0.15
+      contexto.currentTime + 0.15
     );
 
   }
@@ -830,7 +868,11 @@ function hacerSonido() {
 }
 
 
-function hacerSonidoError() {
+/* =====================================================
+   SONIDO ERROR
+===================================================== */
+
+function sonidoError() {
 
   try {
 
@@ -864,15 +906,14 @@ function hacerSonidoError() {
 
 
     ganancia.gain.value =
-      0.15;
+      0.25;
 
 
     oscilador.start();
 
 
     oscilador.stop(
-      contexto.currentTime +
-      0.25
+      contexto.currentTime + 0.25
     );
 
   }
@@ -880,7 +921,6 @@ function hacerSonidoError() {
   catch(e) {}
 
 }
-
 
 </script>
 
