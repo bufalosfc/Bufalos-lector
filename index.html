@@ -125,7 +125,7 @@ button {
 
 .resultado {
   margin-top: 15px;
-  padding: 17px;
+  padding: 20px;
   border-radius: 12px;
   text-align: center;
   font-size: 17px;
@@ -148,8 +148,9 @@ button {
 }
 
 .jugador {
-  font-size: 22px;
+  font-size: 23px;
   font-weight: bold;
+  margin: 5px 0;
 }
 
 .documento {
@@ -168,6 +169,12 @@ button {
   font-size: 14px;
   color: #555;
   line-height: 1.6;
+}
+
+.aviso-grande {
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 </style>
@@ -307,7 +314,7 @@ button {
 
       <br>
 
-      7. El lector queda listo para escanear el siguiente carnet.
+      7. El lector queda listo para el siguiente carnet.
 
       <br>
 
@@ -325,7 +332,7 @@ button {
 
 
 /* =====================================================
-   URL DEL SISTEMA BÚFALOS FC
+   URL APPS SCRIPT
    ===================================================== */
 
 const APPS_SCRIPT_URL =
@@ -343,6 +350,10 @@ let lectorActivo = false;
 let procesando = false;
 
 let totalEscaneos = 0;
+
+let ultimoDocumento = "";
+
+let tiempoUltimoDocumento = 0;
 
 
 /* =====================================================
@@ -401,10 +412,8 @@ function iniciarLector() {
 
     function(errorMessage) {
 
-      /*
-       * Los errores normales de lectura
-       * no se muestran.
-       */
+      // No mostrar errores normales
+      // de lectura del QR.
 
     }
 
@@ -437,6 +446,7 @@ function iniciarLector() {
 
     estado.textContent =
       "❌ No fue posible iniciar la cámara.";
+
 
     console.log(error);
 
@@ -505,20 +515,46 @@ function procesarQR(decodedText) {
   }
 
 
-  procesando = true;
-
-
   const documento =
     String(decodedText || "").trim();
 
 
   if (!documento) {
+    return;
+  }
 
-    procesando = false;
+
+  /*
+   * Evita que la cámara lea el mismo QR
+   * muchas veces seguidas.
+   */
+
+  const ahora =
+    Date.now();
+
+
+  if (
+
+    documento === ultimoDocumento &&
+
+    ahora - tiempoUltimoDocumento < 5000
+
+  ) {
 
     return;
 
   }
+
+
+  ultimoDocumento =
+    documento;
+
+
+  tiempoUltimoDocumento =
+    ahora;
+
+
+  procesando = true;
 
 
   const tipo =
@@ -563,15 +599,31 @@ function procesarQR(decodedText) {
 
         mostrarMensaje(
 
-          "❌ " +
-          (data.mensaje || "Jugador no encontrado."),
+          "❌" +
+
+          "<div class='jugador'>" +
+
+          "JUGADOR NO ENCONTRADO" +
+
+          "</div>" +
+
+          "<div>" +
+
+          escapar(
+
+            data.mensaje ||
+            "El jugador no existe."
+
+          ) +
+
+          "</div>",
 
           "resultado-error"
 
         );
 
 
-        liberarProcesamiento();
+        liberarProcesamiento(3000);
 
         return;
 
@@ -600,14 +652,26 @@ function procesarQR(decodedText) {
 
       mostrarMensaje(
 
-        "❌ Error de conexión con BÚFALOS FC.",
+        "❌" +
+
+        "<div class='jugador'>" +
+
+        "ERROR DE CONEXIÓN" +
+
+        "</div>" +
+
+        "<div>" +
+
+        "No fue posible consultar BÚFALOS FC." +
+
+        "</div>",
 
         "resultado-error"
 
       );
 
 
-      liberarProcesamiento();
+      liberarProcesamiento(3000);
 
     });
 
@@ -621,8 +685,11 @@ function procesarQR(decodedText) {
 function registrarAsistencia(
 
   documento,
+
   tipo,
+
   actividad,
+
   jugador
 
 ) {
@@ -632,14 +699,12 @@ function registrarAsistencia(
 
     method: "POST",
 
-
     headers: {
 
       "Content-Type":
         "application/x-www-form-urlencoded"
 
     },
-
 
     body:
 
@@ -670,87 +735,137 @@ function registrarAsistencia(
   .then(function(data) {
 
 
+    console.log(
+      "RESPUESTA APPS SCRIPT:",
+      data
+    );
+
+
     /* ==========================================
        DUPLICADO
+       ========================================== */
+
+    if (
+
+      data.duplicado === true ||
+
+      data.estado === "DUPLICADO"
+
+    ) {
+
+
+      mostrarMensaje(
+
+        "<div class='aviso-grande'>" +
+
+        "⚠️ YA REGISTRADO" +
+
+        "</div>" +
+
+        "<div class='jugador'>" +
+
+        escapar(
+
+          data.nombre ||
+
+          jugador.nombre ||
+
+          ""
+
+        ) +
+
+        "</div>" +
+
+        "<div>" +
+
+        "Documento: " +
+
+        escapar(
+
+          data.documento ||
+
+          documento
+
+        ) +
+
+        "</div>" +
+
+        "<br>" +
+
+        "<div>" +
+
+        escapar(
+
+          data.mensaje ||
+
+          "Esta asistencia ya fue registrada."
+
+        ) +
+
+        "</div>" +
+
+        "<br>" +
+
+        "<strong>" +
+
+        "No se creó un registro adicional." +
+
+        "</strong>",
+
+        "resultado-duplicado"
+
+      );
+
+
+      /*
+       * Dejamos el mensaje visible
+       * durante 5 segundos.
+       */
+
+      liberarProcesamiento(5000);
+
+
+      return;
+
+    }
+
+
+    /* ==========================================
+       ERROR
        ========================================== */
 
     if (!data.ok) {
 
 
-      if (data.duplicado) {
+      mostrarMensaje(
+
+        "❌" +
+
+        "<div class='jugador'>" +
+
+        "NO REGISTRADO" +
+
+        "</div>" +
+
+        "<div>" +
+
+        escapar(
+
+          data.mensaje ||
+
+          "No fue posible registrar."
+
+        ) +
+
+        "</div>",
+
+        "resultado-error"
+
+      );
 
 
-        mostrarMensaje(
+      liberarProcesamiento(3000);
 
-          "⚠️" +
-
-          "<div class='jugador'>" +
-
-          "YA REGISTRADO" +
-
-          "</div>" +
-
-          "<div>" +
-
-          escapar(
-
-            data.mensaje ||
-
-            "Esta asistencia ya estaba registrada."
-
-          ) +
-
-          "</div>" +
-
-          "<br>" +
-
-          "<strong>" +
-
-          "No se creó un registro adicional." +
-
-          "</strong>",
-
-          "resultado-duplicado"
-
-        );
-
-
-      }
-
-
-      else {
-
-
-        mostrarMensaje(
-
-          "❌" +
-
-          "<div class='jugador'>" +
-
-          "NO REGISTRADO" +
-
-          "</div>" +
-
-          "<div>" +
-
-          escapar(
-
-            data.mensaje ||
-
-            "No fue posible registrar la asistencia."
-
-          ) +
-
-          "</div>",
-
-          "resultado-error"
-
-        );
-
-      }
-
-
-      liberarProcesamiento();
 
       return;
 
@@ -786,7 +901,6 @@ function registrarAsistencia(
 
       "</div>" +
 
-
       "<div class='documento'>" +
 
       "Documento: " +
@@ -799,9 +913,7 @@ function registrarAsistencia(
 
       "</div>" +
 
-
       "<br>" +
-
 
       "<strong>" +
 
@@ -817,19 +929,17 @@ function registrarAsistencia(
 
       "</strong>",
 
-
       "resultado-ok"
 
     );
 
 
-    liberarProcesamiento();
+    liberarProcesamiento(2500);
 
   })
 
 
   .catch(function(error) {
-
 
     console.log(error);
 
@@ -838,9 +948,15 @@ function registrarAsistencia(
 
       "❌" +
 
+      "<div class='jugador'>" +
+
+      "ERROR AL REGISTRAR" +
+
+      "</div>" +
+
       "<div>" +
 
-      "No se pudo registrar la asistencia." +
+      "No se pudo completar el registro." +
 
       "</div>",
 
@@ -849,7 +965,7 @@ function registrarAsistencia(
     );
 
 
-    liberarProcesamiento();
+    liberarProcesamiento(3000);
 
   });
 
@@ -857,10 +973,12 @@ function registrarAsistencia(
 
 
 /* =====================================================
-   PREPARAR SIGUIENTE ESCANEO
+   VOLVER A LISTO
    ===================================================== */
 
-function liberarProcesamiento() {
+function liberarProcesamiento(
+  milisegundos
+) {
 
 
   setTimeout(function() {
@@ -888,7 +1006,7 @@ function liberarProcesamiento() {
     }
 
 
-  }, 1500);
+  }, milisegundos);
 
 }
 
@@ -900,6 +1018,7 @@ function liberarProcesamiento() {
 function mostrarMensaje(
 
   mensaje,
+
   clase
 
 ) {
@@ -924,26 +1043,39 @@ function mostrarMensaje(
 
 
 /* =====================================================
-   SEGURIDAD HTML
+   SEGURIDAD
    ===================================================== */
 
 function escapar(valor) {
 
-
   return String(valor || "")
 
-    .replace(/&/g, "&amp;")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
 
-    .replace(/</g, "&lt;")
+    .replace(
+      /</g,
+      "&lt;"
+    )
 
-    .replace(/>/g, "&gt;")
+    .replace(
+      />/g,
+      "&gt;"
+    )
 
-    .replace(/"/g, "&quot;")
+    .replace(
+      /"/g,
+      "&quot;"
+    )
 
-    .replace(/'/g, "&#039;");
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
-
 
 </script>
 
