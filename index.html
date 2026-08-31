@@ -22,96 +22,150 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  color: #222;
+}
+
+.header {
   background: #111;
   color: white;
-}
-
-.encabezado {
-  background: #000;
   padding: 20px;
   text-align: center;
-  font-size: 25px;
-  font-weight: bold;
 }
 
-.contenedor {
+.header h1 {
+  margin: 0;
+  font-size: 25px;
+}
+
+.header p {
+  margin: 7px 0 0;
+  opacity: .8;
+}
+
+.container {
   max-width: 600px;
   margin: auto;
-  padding: 15px;
+  padding: 18px;
 }
 
-.tarjeta {
-  background: #222;
+.card {
+  background: white;
   border-radius: 16px;
-  padding: 20px;
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.10);
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 7px;
+}
+
+select,
+input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccc;
+  border-radius: 9px;
+  font-size: 16px;
+  background: white;
 }
 
 button {
-  width: 100%;
-  padding: 16px;
   border: 0;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 9px;
+  padding: 13px 17px;
+  font-size: 16px;
   font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-start {
+  width: 100%;
+  background: #111;
+  color: white;
+  margin-top: 15px;
+}
+
+.btn-stop {
+  width: 100%;
+  background: #ddd;
+  color: #222;
   margin-top: 10px;
 }
 
-.verde {
-  background: #16803c;
-  color: white;
+.estado {
+  text-align: center;
+  padding: 13px;
+  border-radius: 10px;
+  margin-top: 15px;
+  background: #eee;
+  font-weight: bold;
 }
 
-.rojo {
-  background: #c62828;
-  color: white;
+.estado-activo {
+  background: #d9f5df;
+  color: #176b2d;
 }
 
-.oculto {
-  display: none !important;
+.estado-error {
+  background: #ffe0e0;
+  color: #a00000;
 }
 
 #reader {
   width: 100%;
-  margin-top: 20px;
-  overflow: hidden;
-  border-radius: 12px;
+  margin-top: 15px;
 }
 
-#resultado {
-  margin-top: 20px;
-  padding: 18px;
+.resultado {
+  margin-top: 15px;
+  padding: 17px;
   border-radius: 12px;
   text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 17px;
+  line-height: 1.5;
 }
 
-.info {
-  background: #1565c0;
+.resultado-ok {
+  background: #d9f5df;
+  color: #176b2d;
 }
 
-.ok {
-  background: #16803c;
+.resultado-error {
+  background: #ffe0e0;
+  color: #a00000;
 }
 
-.error {
-  background: #b71c1c;
+.resultado-duplicado {
+  background: #fff0c7;
+  color: #795600;
 }
 
 .jugador {
-  font-size: 23px;
-  margin-bottom: 8px;
+  font-size: 22px;
+  font-weight: bold;
 }
 
-.historial {
-  margin-top: 20px;
+.documento {
+  font-size: 14px;
+  margin-top: 5px;
 }
 
-.registro {
-  background: #333;
-  padding: 13px;
-  margin-top: 8px;
-  border-radius: 10px;
+.contador {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-top: 12px;
+}
+
+.info {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
 }
 
 </style>
@@ -122,63 +176,137 @@ button {
 <body>
 
 
-<div class="encabezado">
+<div class="header">
 
-🐃 BÚFALOS FC
+  <h1>BÚFALOS FC</h1>
 
-<br>
-
-📷 LECTOR DE ASISTENCIA
+  <p>Lector QR de asistencia</p>
 
 </div>
 
 
-<div class="contenedor">
-
-<div class="tarjeta">
+<div class="container">
 
 
-<button
-  id="btnIniciar"
-  class="verde"
-  onclick="iniciarLector()">
+  <div class="card">
 
-▶️ INICIAR LECTOR
+    <label>
+      Tipo de registro
+    </label>
 
-</button>
+    <select id="tipo">
 
+      <option value="PREASISTENCIA">
+        PREASISTENCIA
+      </option>
 
-<button
-  id="btnDetener"
-  class="rojo oculto"
-  onclick="detenerLector()">
+      <option value="ASISTENCIA">
+        ASISTENCIA REAL
+      </option>
 
-⏹️ DETENER LECTOR
+    </select>
 
-</button>
+    <br><br>
 
+    <label>
+      Actividad
+    </label>
 
-<div id="reader"></div>
-
-
-<div id="resultado"
-     class="info">
-
-Pulsa INICIAR LECTOR para comenzar.
-
-</div>
+    <input
+      id="actividad"
+      value="Entrenamiento">
 
 
-<div class="historial">
+    <button
+      id="btnIniciar"
+      class="btn-start"
+      onclick="iniciarLector()">
 
-<h3>📋 Últimas asistencias</h3>
+      📷 INICIAR LECTOR
 
-<div id="listaHistorial"></div>
-
-</div>
+    </button>
 
 
-</div>
+    <button
+      class="btn-stop"
+      onclick="detenerLector()">
+
+      DETENER LECTOR
+
+    </button>
+
+
+    <div
+      id="estado"
+      class="estado">
+
+      Lector detenido
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div id="reader"></div>
+
+    <div
+      id="resultado"
+      class="resultado"
+      style="display:none;">
+
+    </div>
+
+    <div
+      id="contador"
+      class="contador">
+
+      Escaneos registrados: 0
+
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="info">
+
+      <strong>Cómo funciona</strong>
+
+      <br><br>
+
+      1. Selecciona PREASISTENCIA o ASISTENCIA REAL.
+
+      <br>
+
+      2. Escribe la actividad.
+
+      <br>
+
+      3. Pulsa INICIAR LECTOR.
+
+      <br>
+
+      4. Escanea el carnet del jugador.
+
+      <br>
+
+      5. El sistema identifica al jugador por su Documento.
+
+      <br>
+
+      6. Registra automáticamente el resultado.
+
+      <br>
+
+      7. El lector queda listo para escanear el siguiente carnet.
+
+    </div>
+
+  </div>
+
 
 </div>
 
@@ -187,12 +315,16 @@ Pulsa INICIAR LECTOR para comenzar.
 
 
 /* =====================================================
-   GOOGLE APPS SCRIPT DE BÚFALOS FC
-===================================================== */
+   CONFIGURACIÓN
+   ===================================================== */
 
-const URL_APPS_SCRIPT =
-'https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec';
+const APPS_SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec";
 
+
+/* =====================================================
+   VARIABLES
+   ===================================================== */
 
 let lector = null;
 
@@ -200,14 +332,12 @@ let lectorActivo = false;
 
 let procesando = false;
 
-let ultimoCodigo = '';
-
-let ultimoTiempo = 0;
+let totalEscaneos = 0;
 
 
 /* =====================================================
    INICIAR LECTOR
-===================================================== */
+   ===================================================== */
 
 function iniciarLector() {
 
@@ -215,128 +345,18 @@ function iniciarLector() {
     return;
   }
 
+  const estado =
+    document.getElementById("estado");
 
-  mostrar(
-    '📷 Solicitando acceso a la cámara...',
-    'info'
-  );
+  estado.className =
+    "estado";
+
+  estado.textContent =
+    "Solicitando acceso a la cámara...";
 
 
   lector =
-    new Html5Qrcode('reader');
-
-
-  /*
-    IMPORTANTE:
-
-    Ahora NO utilizamos getCameras().
-
-    Le pedimos directamente al navegador
-    la cámara trasera.
-  */
-
-
-  lector.start(
-
-    {
-      facingMode: {
-        exact: "environment"
-      }
-    },
-
-    {
-
-      fps: 10,
-
-      qrbox: {
-        width: 250,
-        height: 250
-      },
-
-      aspectRatio: 1.0
-
-    },
-
-    function(codigo) {
-
-      codigoEncontrado(codigo);
-
-    },
-
-    function(error) {
-
-      /*
-        Errores normales mientras busca
-        un código QR.
-
-        No hacemos nada aquí.
-      */
-
-    }
-
-  )
-
-  .then(function() {
-
-    lectorActivo = true;
-
-
-    document
-      .getElementById('btnIniciar')
-      .classList.add('oculto');
-
-
-    document
-      .getElementById('btnDetener')
-      .classList.remove('oculto');
-
-
-    mostrar(
-      '📷 Lector activo.<br><br>' +
-      'Presenta el QR del carnet.',
-      'info'
-    );
-
-  })
-
-
-  .catch(function(error) {
-
-    console.error(
-      'ERROR DE CÁMARA:',
-      error
-    );
-
-
-    /*
-      Si exact: environment falla,
-      hacemos un segundo intento
-      con environment normal.
-    */
-
-    iniciarCamaraAlternativa();
-
-  });
-
-}
-
-
-/* =====================================================
-   SEGUNDO INTENTO DE CÁMARA
-===================================================== */
-
-function iniciarCamaraAlternativa() {
-
-  if (!lector) {
-    lector =
-      new Html5Qrcode('reader');
-  }
-
-
-  mostrar(
-    '📷 Intentando abrir la cámara trasera...',
-    'info'
-  );
+    new Html5Qrcode("reader");
 
 
   lector.start(
@@ -346,7 +366,6 @@ function iniciarCamaraAlternativa() {
     },
 
     {
-
       fps: 10,
 
       qrbox: {
@@ -358,17 +377,16 @@ function iniciarCamaraAlternativa() {
 
     },
 
-    function(codigo) {
+    function(decodedText) {
 
-      codigoEncontrado(codigo);
+      procesarQR(decodedText);
 
     },
 
-    function(error) {
+    function(errorMessage) {
 
-      /*
-        No mostramos errores normales.
-      */
+      // Los errores normales de lectura
+      // no se muestran.
 
     }
 
@@ -378,58 +396,24 @@ function iniciarCamaraAlternativa() {
 
     lectorActivo = true;
 
+    estado.className =
+      "estado estado-activo";
 
-    document
-      .getElementById('btnIniciar')
-      .classList.add('oculto');
-
-
-    document
-      .getElementById('btnDetener')
-      .classList.remove('oculto');
-
-
-    mostrar(
-      '📷 Lector activo.<br><br>' +
-      'Presenta el QR del carnet.',
-      'info'
-    );
+    estado.textContent =
+      "🟢 LECTOR ACTIVO — Escanee un carnet";
 
   })
 
-
   .catch(function(error) {
 
-    console.error(
-      'ERROR FINAL DE CÁMARA:',
-      error
-    );
+    lectorActivo = false;
 
+    estado.className =
+      "estado estado-error";
 
-    let mensaje =
-      '❌ No se pudo abrir la cámara.';
-
-
-    if (
-      error &&
-      error.name
-    ) {
-
-      mensaje +=
-        '<br><br>' +
-        'Código: ' +
-        error.name;
-
-    }
-
-
-    mostrar(
-      mensaje,
-      'error'
-    );
-
-
-    lector = null;
+    estado.textContent =
+      "❌ No fue posible iniciar la cámara. " +
+      error;
 
   });
 
@@ -437,406 +421,19 @@ function iniciarCamaraAlternativa() {
 
 
 /* =====================================================
-   QR DETECTADO
-===================================================== */
-
-function codigoEncontrado(codigo) {
-
-  codigo =
-    String(codigo || '').trim();
-
-
-  if (!codigo) {
-    return;
-  }
-
-
-  const ahora =
-    Date.now();
-
-
-  /*
-    Evita leer el mismo QR
-    varias veces seguidas.
-  */
-
-  if (
-    codigo === ultimoCodigo &&
-    ahora - ultimoTiempo < 5000
-  ) {
-
-    return;
-
-  }
-
-
-  ultimoCodigo =
-    codigo;
-
-  ultimoTiempo =
-    ahora;
-
-
-  if (procesando) {
-    return;
-  }
-
-
-  procesando = true;
-
-
-  mostrar(
-    '🔎 QR detectado.<br>' +
-    'Consultando jugador...',
-    'info'
-  );
-
-
-  consultarJugador(codigo);
-
-}
-
-
-/* =====================================================
-   OBTENER ID DEL QR
-===================================================== */
-
-function consultarJugador(codigo) {
-
-  let jugadorID =
-    codigo;
-
-
-  /*
-    Si el QR contiene el enlace completo
-    del carnet, extraemos solamente
-    el ID del jugador.
-  */
-
-  try {
-
-    if (
-      codigo.includes('?jugador=')
-    ) {
-
-      const url =
-        new URL(codigo);
-
-
-      jugadorID =
-        url.searchParams.get(
-          'jugador'
-        ) || codigo;
-
-    }
-
-  }
-
-  catch(error) {
-
-    console.log(
-      'QR recibido como texto.'
-    );
-
-  }
-
-
-  jugadorID =
-    String(jugadorID)
-      .trim();
-
-
-  registrarAsistencia(
-    jugadorID
-  );
-
-}
-
-
-/* =====================================================
-   REGISTRAR ASISTENCIA
-===================================================== */
-
-function registrarAsistencia(
-  jugadorID
-) {
-
-  const url =
-    URL_APPS_SCRIPT +
-    '?accion=qr&codigo=' +
-    encodeURIComponent(
-      jugadorID
-    );
-
-
-  fetch(url)
-
-    .then(function(respuesta) {
-
-      if (!respuesta.ok) {
-
-        throw new Error(
-          'Error de comunicación.'
-        );
-
-      }
-
-
-      return respuesta.json();
-
-    })
-
-
-    .then(function(datos) {
-
-
-      console.log(
-        'Respuesta BÚFALOS:',
-        datos
-      );
-
-
-      /*
-        JUGADOR ENCONTRADO
-      */
-
-      if (
-        datos.ok &&
-        datos.encontrado
-      ) {
-
-
-        /*
-          DUPLICADO
-        */
-
-        if (
-          datos.duplicate
-        ) {
-
-          mostrar(
-
-            '⚠️<br>' +
-
-            '<div class="jugador">' +
-
-            (
-              datos.nombre ||
-              ''
-            ) +
-
-            '</div>' +
-
-            'Ya tenía asistencia registrada hoy.',
-
-            'info'
-
-          );
-
-        }
-
-
-        /*
-          NUEVA ASISTENCIA
-        */
-
-        else {
-
-          mostrar(
-
-            '✅<br>' +
-
-            '<div class="jugador">' +
-
-            (
-              datos.nombre ||
-              ''
-            ) +
-
-            '</div>' +
-
-            (
-              datos.categoria ||
-              ''
-            ) +
-
-            '<br><br>' +
-
-            'Asistencia registrada<br>' +
-
-            '🕐 ' +
-
-            (
-              datos.hora ||
-              ''
-            ),
-
-            'ok'
-
-          );
-
-
-          agregarHistorial(
-            datos
-          );
-
-
-          sonidoCorrecto();
-
-        }
-
-      }
-
-
-      /*
-        NO ENCONTRADO
-      */
-
-      else {
-
-        mostrar(
-
-          '❌<br>' +
-
-          (
-            datos.mensaje ||
-            'Jugador no encontrado.'
-          ),
-
-          'error'
-
-        );
-
-
-        sonidoError();
-
-      }
-
-
-      /*
-        Preparar siguiente QR.
-      */
-
-      setTimeout(function() {
-
-        procesando = false;
-
-
-        mostrar(
-
-          '📷 Listo.<br>' +
-          'Presenta el siguiente carnet.',
-
-          'info'
-
-        );
-
-      }, 1800);
-
-    })
-
-
-    .catch(function(error) {
-
-      console.error(
-        error
-      );
-
-
-      mostrar(
-
-        '❌ Error de comunicación con BÚFALOS FC.',
-
-        'error'
-
-      );
-
-
-      procesando = false;
-
-    });
-
-}
-
-
-/* =====================================================
-   HISTORIAL
-===================================================== */
-
-function agregarHistorial(
-  datos
-) {
-
-  const lista =
-    document.getElementById(
-      'listaHistorial'
-    );
-
-
-  const registro =
-    document.createElement(
-      'div'
-    );
-
-
-  registro.className =
-    'registro';
-
-
-  registro.innerHTML =
-
-    '✅ <strong>' +
-
-    (
-      datos.nombre ||
-      ''
-    ) +
-
-    '</strong><br>' +
-
-    (
-      datos.categoria ||
-      ''
-    ) +
-
-    '<br>🕐 ' +
-
-    (
-      datos.hora ||
-      ''
-    );
-
-
-  lista.prepend(
-    registro
-  );
-
-
-  /*
-    Mantener máximo 10.
-  */
-
-  while (
-    lista.children.length > 10
-  ) {
-
-    lista.removeChild(
-      lista.lastChild
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   DETENER LECTOR
-===================================================== */
+   DETENER
+   ===================================================== */
 
 function detenerLector() {
 
-  if (!lector) {
+  if (!lector || !lectorActivo) {
+
+    document.getElementById("estado")
+      .textContent =
+      "Lector detenido.";
+
     return;
+
   }
 
 
@@ -846,37 +443,23 @@ function detenerLector() {
 
       lector.clear();
 
-
-      lector = null;
-
       lectorActivo = false;
 
-      procesando = false;
+      document.getElementById("estado")
+        .className =
+        "estado";
 
-
-      document
-        .getElementById('btnDetener')
-        .classList.add('oculto');
-
-
-      document
-        .getElementById('btnIniciar')
-        .classList.remove('oculto');
-
-
-      mostrar(
-        'Lector detenido.',
-        'info'
-      );
+      document.getElementById("estado")
+        .textContent =
+        "Lector detenido.";
 
     })
 
-
     .catch(function(error) {
 
-      console.error(
-        error
-      );
+      console.log(error);
+
+      lectorActivo = false;
 
     });
 
@@ -884,138 +467,325 @@ function detenerLector() {
 
 
 /* =====================================================
-   MENSAJES
-===================================================== */
+   PROCESAR QR
+   ===================================================== */
 
-function mostrar(
-  texto,
-  tipo
+function procesarQR(decodedText) {
+
+  if (procesando) {
+    return;
+  }
+
+  procesando = true;
+
+
+  const documento =
+    String(decodedText || "").trim();
+
+
+  if (!documento) {
+
+    procesando = false;
+
+    return;
+
+  }
+
+
+  const tipo =
+    document.getElementById("tipo").value;
+
+
+  const actividad =
+    document.getElementById("actividad").value ||
+    "Entrenamiento";
+
+
+  mostrarMensaje(
+    "Consultando jugador...",
+    "resultado"
+  );
+
+
+  const url =
+    APPS_SCRIPT_URL +
+    "?accion=qr" +
+    "&documento=" +
+    encodeURIComponent(documento);
+
+
+  fetch(url)
+
+    .then(function(response) {
+
+      return response.json();
+
+    })
+
+    .then(function(data) {
+
+      if (!data.ok) {
+
+        mostrarMensaje(
+          "❌ " + data.mensaje,
+          "resultado-error"
+        );
+
+        liberarProcesamiento();
+
+        return;
+
+      }
+
+
+      registrarAsistencia(
+        documento,
+        tipo,
+        actividad,
+        data.jugador
+      );
+
+    })
+
+    .catch(function(error) {
+
+      mostrarMensaje(
+        "❌ Error de conexión con BÚFALOS FC.",
+        "resultado-error"
+      );
+
+      console.log(error);
+
+      liberarProcesamiento();
+
+    });
+
+}
+
+
+/* =====================================================
+   REGISTRAR ASISTENCIA
+   ===================================================== */
+
+function registrarAsistencia(
+  documento,
+  tipo,
+  actividad,
+  jugador
 ) {
 
-  const elemento =
-    document.getElementById(
-      'resultado'
+
+  const url =
+    APPS_SCRIPT_URL +
+    "?accion=registrarAsistencia" +
+    "&documento=" +
+    encodeURIComponent(documento) +
+    "&tipo=" +
+    encodeURIComponent(tipo) +
+    "&actividad=" +
+    encodeURIComponent(actividad);
+
+
+  /*
+   * Usamos una petición POST para enviar
+   * el registro de asistencia.
+   */
+
+  fetch(APPS_SCRIPT_URL, {
+
+    method: "POST",
+
+    headers: {
+      "Content-Type":
+        "application/x-www-form-urlencoded"
+    },
+
+    body:
+
+      "accion=registrarAsistencia" +
+
+      "&documento=" +
+      encodeURIComponent(documento) +
+
+      "&tipo=" +
+      encodeURIComponent(tipo) +
+
+      "&actividad=" +
+      encodeURIComponent(actividad) +
+
+      "&registradoPor=" +
+      encodeURIComponent("GitHub QR")
+
+  })
+
+  .then(function(response) {
+
+    return response.json();
+
+  })
+
+  .then(function(data) {
+
+    if (!data.ok) {
+
+      if (data.duplicado) {
+
+        mostrarMensaje(
+
+          "⚠️ " +
+          data.mensaje,
+
+          "resultado-duplicado"
+
+        );
+
+      } else {
+
+        mostrarMensaje(
+
+          "❌ " +
+          data.mensaje,
+
+          "resultado-error"
+
+        );
+
+      }
+
+      liberarProcesamiento();
+
+      return;
+
+    }
+
+
+    totalEscaneos++;
+
+
+    document.getElementById("contador")
+      .textContent =
+      "Escaneos registrados: " +
+      totalEscaneos;
+
+
+    mostrarMensaje(
+
+      "✅<div class='jugador'>" +
+      escapar(jugador.nombre) +
+      "</div>" +
+
+      "<div class='documento'>" +
+      "Documento: " +
+      escapar(jugador.documento) +
+      "</div>" +
+
+      "<br>" +
+
+      (
+        tipo === "PREASISTENCIA"
+          ? "PREASISTENCIA REGISTRADA"
+          : "ASISTENCIA REAL REGISTRADA"
+      ),
+
+      "resultado-ok"
+
     );
 
 
-  elemento.className =
-    tipo;
+    liberarProcesamiento();
 
+  })
 
-  elemento.innerHTML =
-    texto;
+  .catch(function(error) {
+
+    console.log(error);
+
+    mostrarMensaje(
+
+      "❌ No se pudo registrar la asistencia.",
+
+      "resultado-error"
+
+    );
+
+    liberarProcesamiento();
+
+  });
 
 }
 
 
 /* =====================================================
-   SONIDO CORRECTO
-===================================================== */
+   LIBERAR PARA SIGUIENTE ESCANEO
+   ===================================================== */
 
-function sonidoCorrecto() {
+function liberarProcesamiento() {
 
-  try {
+  setTimeout(function() {
 
-    const contexto =
-      new (
-        window.AudioContext ||
-        window.webkitAudioContext
-      )();
+    procesando = false;
 
+    if (lectorActivo) {
 
-    const oscilador =
-      contexto.createOscillator();
+      document.getElementById("estado")
+        .className =
+        "estado estado-activo";
 
+      document.getElementById("estado")
+        .textContent =
+        "🟢 LECTOR ACTIVO — Escanee el siguiente carnet";
 
-    const ganancia =
-      contexto.createGain();
+    }
 
-
-    oscilador.connect(
-      ganancia
-    );
-
-
-    ganancia.connect(
-      contexto.destination
-    );
-
-
-    oscilador.frequency.value =
-      900;
-
-
-    ganancia.gain.value =
-      0.15;
-
-
-    oscilador.start();
-
-
-    oscilador.stop(
-      contexto.currentTime +
-      0.15
-    );
-
-  }
-
-  catch(e) {}
+  }, 1500);
 
 }
 
 
 /* =====================================================
-   SONIDO ERROR
-===================================================== */
+   MENSAJES
+   ===================================================== */
 
-function sonidoError() {
+function mostrarMensaje(
+  mensaje,
+  clase
+) {
 
-  try {
-
-    const contexto =
-      new (
-        window.AudioContext ||
-        window.webkitAudioContext
-      )();
+  const resultado =
+    document.getElementById("resultado");
 
 
-    const oscilador =
-      contexto.createOscillator();
+  resultado.style.display =
+    "block";
 
 
-    const ganancia =
-      contexto.createGain();
+  resultado.className =
+    "resultado " + clase;
 
 
-    oscilador.connect(
-      ganancia
-    );
+  resultado.innerHTML =
+    mensaje;
+
+}
 
 
-    ganancia.connect(
-      contexto.destination
-    );
+/* =====================================================
+   SEGURIDAD HTML
+   ===================================================== */
 
+function escapar(valor) {
 
-    oscilador.frequency.value =
-      250;
+  return String(valor || "")
 
+    .replace(/&/g, "&amp;")
 
-    ganancia.gain.value =
-      0.20;
+    .replace(/</g, "&lt;")
 
+    .replace(/>/g, "&gt;")
 
-    oscilador.start();
+    .replace(/"/g, "&quot;")
 
-
-    oscilador.stop(
-      contexto.currentTime +
-      0.25
-    );
-
-  }
-
-  catch(e) {}
+    .replace(/'/g, "&#039;");
 
 }
 
