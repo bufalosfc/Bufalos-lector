@@ -10,8 +10,10 @@
 
 <title>BÚFALOS FC - Lector QR</title>
 
-<script src="https://unpkg.com/html5-qrcode"
-        type="text/javascript"></script>
+<script
+  src="https://unpkg.com/html5-qrcode"
+  type="text/javascript">
+</script>
 
 <style>
 
@@ -206,7 +208,9 @@ button {
 
     </select>
 
+
     <br><br>
+
 
     <label>
       Actividad
@@ -251,12 +255,14 @@ button {
 
     <div id="reader"></div>
 
+
     <div
       id="resultado"
       class="resultado"
       style="display:none;">
 
     </div>
+
 
     <div
       id="contador"
@@ -303,6 +309,10 @@ button {
 
       7. El lector queda listo para escanear el siguiente carnet.
 
+      <br>
+
+      8. No permite duplicar el mismo registro.
+
     </div>
 
   </div>
@@ -315,7 +325,7 @@ button {
 
 
 /* =====================================================
-   CONFIGURACIÓN
+   URL DEL SISTEMA BÚFALOS FC
    ===================================================== */
 
 const APPS_SCRIPT_URL =
@@ -345,11 +355,14 @@ function iniciarLector() {
     return;
   }
 
+
   const estado =
     document.getElementById("estado");
 
+
   estado.className =
     "estado";
+
 
   estado.textContent =
     "Solicitando acceso a la cámara...";
@@ -366,6 +379,7 @@ function iniciarLector() {
     },
 
     {
+
       fps: 10,
 
       qrbox: {
@@ -377,43 +391,54 @@ function iniciarLector() {
 
     },
 
+
     function(decodedText) {
 
       procesarQR(decodedText);
 
     },
 
+
     function(errorMessage) {
 
-      // Los errores normales de lectura
-      // no se muestran.
+      /*
+       * Los errores normales de lectura
+       * no se muestran.
+       */
 
     }
 
   )
 
+
   .then(function() {
 
     lectorActivo = true;
 
+
     estado.className =
       "estado estado-activo";
+
 
     estado.textContent =
       "🟢 LECTOR ACTIVO — Escanee un carnet";
 
   })
 
+
   .catch(function(error) {
 
     lectorActivo = false;
 
+
     estado.className =
       "estado estado-error";
 
+
     estado.textContent =
-      "❌ No fue posible iniciar la cámara. " +
-      error;
+      "❌ No fue posible iniciar la cámara.";
+
+    console.log(error);
 
   });
 
@@ -421,7 +446,7 @@ function iniciarLector() {
 
 
 /* =====================================================
-   DETENER
+   DETENER LECTOR
    ===================================================== */
 
 function detenerLector() {
@@ -445,15 +470,18 @@ function detenerLector() {
 
       lectorActivo = false;
 
+
       document.getElementById("estado")
         .className =
         "estado";
+
 
       document.getElementById("estado")
         .textContent =
         "Lector detenido.";
 
     })
+
 
     .catch(function(error) {
 
@@ -475,6 +503,7 @@ function procesarQR(decodedText) {
   if (procesando) {
     return;
   }
+
 
   procesando = true;
 
@@ -502,14 +531,19 @@ function procesarQR(decodedText) {
 
 
   mostrarMensaje(
+
     "Consultando jugador...",
+
     "resultado"
+
   );
 
 
   const url =
     APPS_SCRIPT_URL +
+
     "?accion=qr" +
+
     "&documento=" +
     encodeURIComponent(documento);
 
@@ -522,14 +556,20 @@ function procesarQR(decodedText) {
 
     })
 
+
     .then(function(data) {
 
       if (!data.ok) {
 
         mostrarMensaje(
-          "❌ " + data.mensaje,
+
+          "❌ " +
+          (data.mensaje || "Jugador no encontrado."),
+
           "resultado-error"
+
         );
+
 
         liberarProcesamiento();
 
@@ -539,22 +579,33 @@ function procesarQR(decodedText) {
 
 
       registrarAsistencia(
+
         documento,
+
         tipo,
+
         actividad,
+
         data.jugador
+
       );
 
     })
 
+
     .catch(function(error) {
 
+      console.log(error);
+
+
       mostrarMensaje(
+
         "❌ Error de conexión con BÚFALOS FC.",
+
         "resultado-error"
+
       );
 
-      console.log(error);
 
       liberarProcesamiento();
 
@@ -568,37 +619,27 @@ function procesarQR(decodedText) {
    ===================================================== */
 
 function registrarAsistencia(
+
   documento,
   tipo,
   actividad,
   jugador
+
 ) {
 
-
-  const url =
-    APPS_SCRIPT_URL +
-    "?accion=registrarAsistencia" +
-    "&documento=" +
-    encodeURIComponent(documento) +
-    "&tipo=" +
-    encodeURIComponent(tipo) +
-    "&actividad=" +
-    encodeURIComponent(actividad);
-
-
-  /*
-   * Usamos una petición POST para enviar
-   * el registro de asistencia.
-   */
 
   fetch(APPS_SCRIPT_URL, {
 
     method: "POST",
 
+
     headers: {
+
       "Content-Type":
         "application/x-www-form-urlencoded"
+
     },
+
 
     body:
 
@@ -618,39 +659,96 @@ function registrarAsistencia(
 
   })
 
+
   .then(function(response) {
 
     return response.json();
 
   })
 
+
   .then(function(data) {
+
+
+    /* ==========================================
+       DUPLICADO
+       ========================================== */
 
     if (!data.ok) {
 
+
       if (data.duplicado) {
+
 
         mostrarMensaje(
 
-          "⚠️ " +
-          data.mensaje,
+          "⚠️" +
+
+          "<div class='jugador'>" +
+
+          "YA REGISTRADO" +
+
+          "</div>" +
+
+          "<div>" +
+
+          escapar(
+
+            data.mensaje ||
+
+            "Esta asistencia ya estaba registrada."
+
+          ) +
+
+          "</div>" +
+
+          "<br>" +
+
+          "<strong>" +
+
+          "No se creó un registro adicional." +
+
+          "</strong>",
 
           "resultado-duplicado"
 
         );
 
-      } else {
+
+      }
+
+
+      else {
+
 
         mostrarMensaje(
 
-          "❌ " +
-          data.mensaje,
+          "❌" +
+
+          "<div class='jugador'>" +
+
+          "NO REGISTRADO" +
+
+          "</div>" +
+
+          "<div>" +
+
+          escapar(
+
+            data.mensaje ||
+
+            "No fue posible registrar la asistencia."
+
+          ) +
+
+          "</div>",
 
           "resultado-error"
 
         );
 
       }
+
 
       liberarProcesamiento();
 
@@ -659,33 +757,66 @@ function registrarAsistencia(
     }
 
 
+    /* ==========================================
+       REGISTRO CORRECTO
+       ========================================== */
+
     totalEscaneos++;
 
 
     document.getElementById("contador")
       .textContent =
+
       "Escaneos registrados: " +
+
       totalEscaneos;
 
 
     mostrarMensaje(
 
-      "✅<div class='jugador'>" +
-      escapar(jugador.nombre) +
+      "✅" +
+
+      "<div class='jugador'>" +
+
+      escapar(
+
+        jugador.nombre
+
+      ) +
+
       "</div>" +
 
+
       "<div class='documento'>" +
+
       "Documento: " +
-      escapar(jugador.documento) +
+
+      escapar(
+
+        jugador.documento
+
+      ) +
+
       "</div>" +
+
 
       "<br>" +
 
+
+      "<strong>" +
+
       (
+
         tipo === "PREASISTENCIA"
+
           ? "PREASISTENCIA REGISTRADA"
+
           : "ASISTENCIA REAL REGISTRADA"
-      ),
+
+      ) +
+
+      "</strong>",
+
 
       "resultado-ok"
 
@@ -696,17 +827,27 @@ function registrarAsistencia(
 
   })
 
+
   .catch(function(error) {
+
 
     console.log(error);
 
+
     mostrarMensaje(
 
-      "❌ No se pudo registrar la asistencia.",
+      "❌" +
+
+      "<div>" +
+
+      "No se pudo registrar la asistencia." +
+
+      "</div>",
 
       "resultado-error"
 
     );
+
 
     liberarProcesamiento();
 
@@ -716,26 +857,36 @@ function registrarAsistencia(
 
 
 /* =====================================================
-   LIBERAR PARA SIGUIENTE ESCANEO
+   PREPARAR SIGUIENTE ESCANEO
    ===================================================== */
 
 function liberarProcesamiento() {
 
+
   setTimeout(function() {
+
 
     procesando = false;
 
+
     if (lectorActivo) {
+
 
       document.getElementById("estado")
         .className =
+
         "estado estado-activo";
+
 
       document.getElementById("estado")
         .textContent =
-        "🟢 LECTOR ACTIVO — Escanee el siguiente carnet";
+
+        "🟢 LECTOR ACTIVO — " +
+
+        "Escanee el siguiente carnet";
 
     }
+
 
   }, 1500);
 
@@ -743,13 +894,16 @@ function liberarProcesamiento() {
 
 
 /* =====================================================
-   MENSAJES
+   MOSTRAR MENSAJE
    ===================================================== */
 
 function mostrarMensaje(
+
   mensaje,
   clase
+
 ) {
+
 
   const resultado =
     document.getElementById("resultado");
@@ -775,6 +929,7 @@ function mostrarMensaje(
 
 function escapar(valor) {
 
+
   return String(valor || "")
 
     .replace(/&/g, "&amp;")
@@ -789,7 +944,9 @@ function escapar(valor) {
 
 }
 
+
 </script>
+
 
 </body>
 
