@@ -731,11 +731,398 @@ async function detenerCamara() {
    ENVIAR REGISTRO MEDIANTE JSONP
 ========================================================= */
 
+```javascript
+/* =========================================================
+   ENVIAR REGISTRO MEDIANTE JSONP — VERSIÓN ROBUSTA
+========================================================= */
+
 function enviarRegistro(
   documento,
   tipo,
   actividad
 ) {
+
+  cancelarSolicitud();
+
+
+  mostrarResultado(
+
+    "📤" +
+
+    "<div class='jugador'>" +
+    "PROCESANDO..." +
+    "</div>" +
+
+    "Enviando información al sistema BÚFALOS FC." +
+
+    "<br><br>" +
+
+    "⏳ Esperando confirmación...",
+
+    "diagnostico"
+
+  );
+
+
+  document.getElementById(
+    "estadoLector"
+  ).innerHTML =
+    "🟡 ENVIANDO AL SISTEMA BÚFALOS FC";
+
+
+  /*
+   * Creamos un nombre único para el callback.
+   */
+
+  const nombreCallback =
+    "bufalosRespuesta_" +
+    Date.now() +
+    "_" +
+    Math.floor(
+      Math.random() * 100000
+    );
+
+
+  /*
+   * Variable para evitar procesar
+   * la respuesta más de una vez.
+   */
+
+  let respuestaProcesada = false;
+
+
+  /*
+   * Función global que recibirá
+   * la respuesta JSONP.
+   */
+
+  window[nombreCallback] =
+    function(resultado) {
+
+      if (respuestaProcesada) {
+
+        return;
+
+      }
+
+
+      respuestaProcesada = true;
+
+
+      console.log(
+        "✅ RESPUESTA JSONP RECIBIDA:",
+        resultado
+      );
+
+
+      /*
+       * Cancelamos temporizador
+       * y eliminamos el script.
+       */
+
+      cancelarSolicitud();
+
+
+      /*
+       * Eliminamos el callback global.
+       */
+
+      try {
+
+        delete window[
+          nombreCallback
+        ];
+
+      }
+
+      catch(error) {
+
+        console.log(
+          "No se pudo eliminar callback:",
+          error
+        );
+
+      }
+
+
+      esperandoRespuesta = false;
+
+
+      /*
+       * Mostramos el resultado real.
+       */
+
+      mostrarResultadoReal(
+        resultado,
+        tipo
+      );
+
+    };
+
+
+  /*
+   * Creamos el script JSONP.
+   */
+
+  const script =
+    document.createElement(
+      "script"
+    );
+
+
+  script.async = true;
+
+
+  scriptRespuestaPendiente =
+    script;
+
+
+  /*
+   * Construimos los parámetros.
+   */
+
+  const parametros =
+
+    "?accion=" +
+    encodeURIComponent(
+      "registrarAsistenciaQR"
+    ) +
+
+    "&documento=" +
+    encodeURIComponent(
+      documento
+    ) +
+
+    "&tipo=" +
+    encodeURIComponent(
+      tipo
+    ) +
+
+    "&actividad=" +
+    encodeURIComponent(
+      actividad
+    ) +
+
+    "&registradoPor=" +
+    encodeURIComponent(
+      "Hub QR"
+    ) +
+
+    "&callback=" +
+    encodeURIComponent(
+      nombreCallback
+    ) +
+
+    "&_=" +
+    Date.now();
+
+
+  const urlCompleta =
+    APPS_SCRIPT_URL +
+    parametros;
+
+
+  console.log(
+    "📤 ENVIANDO JSONP:",
+    urlCompleta
+  );
+
+
+  script.src =
+    urlCompleta;
+
+
+  /*
+   * Error de carga del script.
+   */
+
+  script.onerror =
+    function() {
+
+      if (respuestaProcesada) {
+
+        return;
+
+      }
+
+
+      respuestaProcesada = true;
+
+
+      console.error(
+        "❌ ERROR CARGANDO RESPUESTA JSONP"
+      );
+
+
+      esperandoRespuesta = false;
+
+
+      try {
+
+        delete window[
+          nombreCallback
+        ];
+
+      }
+
+      catch(error) {}
+
+
+      if (
+        script.parentNode
+      ) {
+
+        script.parentNode.removeChild(
+          script
+        );
+
+      }
+
+
+      scriptRespuestaPendiente =
+        null;
+
+
+      mostrarResultado(
+
+        "❌" +
+
+        "<div class='jugador'>" +
+        "ERROR DE COMUNICACIÓN" +
+        "</div>" +
+
+        "<br>" +
+
+        "No fue posible recibir la respuesta del sistema BÚFALOS FC.",
+
+        "error"
+
+      );
+
+
+      document.getElementById(
+        "estadoLector"
+      ).innerHTML =
+        "❌ ERROR DE COMUNICACIÓN";
+
+
+      mostrarContinuar();
+
+    };
+
+
+  /*
+   * Insertamos el script.
+   */
+
+  document.head.appendChild(
+    script
+  );
+
+
+  /*
+   * Tiempo máximo de espera.
+   */
+
+  script.dataset.temporizador =
+    setTimeout(
+
+      function() {
+
+        if (
+          respuestaProcesada ||
+          !esperandoRespuesta
+        ) {
+
+          return;
+
+        }
+
+
+        respuestaProcesada = true;
+
+
+        console.warn(
+          "⚠️ TIEMPO DE ESPERA JSONP AGOTADO"
+        );
+
+
+        esperandoRespuesta = false;
+
+
+        /*
+         * Eliminamos callback.
+         */
+
+        try {
+
+          delete window[
+            nombreCallback
+          ];
+
+        }
+
+        catch(error) {}
+
+
+        /*
+         * Eliminamos script.
+         */
+
+        if (
+          script.parentNode
+        ) {
+
+          script.parentNode.removeChild(
+            script
+          );
+
+        }
+
+
+        scriptRespuestaPendiente =
+          null;
+
+
+        /*
+         * Avisamos al usuario.
+         */
+
+        mostrarResultado(
+
+          "⚠️" +
+
+          "<div class='jugador'>" +
+          "REGISTRO ENVIADO" +
+          "</div>" +
+
+          "<br>" +
+
+          "El sistema procesó la solicitud, " +
+          "pero el navegador no recibió la confirmación visual.",
+
+          "diagnostico"
+
+        );
+
+
+        document.getElementById(
+          "estadoLector"
+        ).innerHTML =
+          "⚠️ SIN CONFIRMACIÓN VISUAL";
+
+
+        mostrarContinuar();
+
+      },
+
+      10000
+
+    );
+
+}
+```
+
 
   cancelarSolicitud();
 
