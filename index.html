@@ -201,9 +201,14 @@ pre {
   word-break: break-word;
 }
 
+
 /* =====================================================
-   FORMULARIO OCULTO PARA POST
+   IFRAME OCULTO PARA COMUNICACIÓN CON APPS SCRIPT
    ===================================================== */
+
+#iframePostHub {
+  display: none;
+}
 
 #formPostHub {
   display: none;
@@ -217,6 +222,10 @@ pre {
 <body>
 
 
+<!-- =====================================================
+     ENCABEZADO
+     ===================================================== -->
+
 <div class="header">
 
   <h1>BÚFALOS FC</h1>
@@ -228,6 +237,10 @@ pre {
 
 <div class="container">
 
+
+  <!-- ===================================================
+       CONFIGURACIÓN
+       =================================================== -->
 
   <div class="card">
 
@@ -260,7 +273,8 @@ pre {
 
     <input
       id="actividad"
-      value="Entrenamiento">
+      value="Entrenamiento"
+      autocomplete="off">
 
 
     <button
@@ -294,6 +308,10 @@ pre {
   </div>
 
 
+  <!-- ===================================================
+       LECTOR
+       =================================================== -->
+
   <div class="card">
 
 
@@ -320,6 +338,10 @@ pre {
   </div>
 
 
+  <!-- ===================================================
+       INFORMACIÓN
+       =================================================== -->
+
   <div class="card">
 
 
@@ -329,7 +351,9 @@ pre {
         Cómo funciona
       </strong>
 
+
       <br><br>
+
 
       1. Selecciona PREASISTENCIA o ASISTENCIA REAL.
 
@@ -351,19 +375,23 @@ pre {
 
       <br>
 
-      6. Registra automáticamente.
+      6. El servidor verifica y registra.
 
       <br>
 
-      7. La cámara permanece activa.
+      7. El resultado aparece en pantalla.
 
       <br>
 
-      8. Puedes escanear inmediatamente el siguiente carnet.
+      8. La cámara permanece activa.
 
       <br>
 
-      9. No permite duplicar el mismo registro.
+      9. Puedes escanear el siguiente carnet.
+
+      <br>
+
+      10. No permite duplicar el mismo registro.
 
     </div>
 
@@ -375,46 +403,58 @@ pre {
 
 
 <!-- =====================================================
-     FORMULARIO OCULTO
+     IFRAME OCULTO
      ===================================================== -->
 
 <iframe
   name="iframePostHub"
-  id="iframePostHub"
-  style="display:none;">
+  id="iframePostHub">
 </iframe>
 
 
+<!-- =====================================================
+     FORMULARIO POST
+     ===================================================== -->
+
 <form
   id="formPostHub"
+
   method="POST"
+
   target="iframePostHub"
+
   action="https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec">
+
 
   <input
     type="hidden"
     name="accion"
     id="postAccion">
 
+
   <input
     type="hidden"
     name="documento"
     id="postDocumento">
+
 
   <input
     type="hidden"
     name="tipo"
     id="postTipo">
 
+
   <input
     type="hidden"
     name="actividad"
     id="postActividad">
 
+
   <input
     type="hidden"
     name="registradoPor"
     id="postRegistradoPor">
+
 
 </form>
 
@@ -423,7 +463,7 @@ pre {
 
 
 /* =====================================================
-   URL DE GOOGLE APPS SCRIPT
+   URL APPS SCRIPT
    ===================================================== */
 
 const APPS_SCRIPT_URL =
@@ -451,9 +491,65 @@ let tiempoUltimoDocumento = 0;
    CONFIGURACIÓN
    ===================================================== */
 
-const BLOQUEO_MISMO_QR_MS = 3500;
+const BLOQUEO_MISMO_QR_MS = 4000;
 
-const TIEMPO_LIBERAR_MS = 1500;
+const TIEMPO_LIBERAR_MS = 1200;
+
+
+/* =====================================================
+   ESCUCHAR RESPUESTA DEL APPS SCRIPT
+   ===================================================== */
+
+window.addEventListener(
+  "message",
+  function(event) {
+
+    try {
+
+      console.log(
+        "MENSAJE RECIBIDO:",
+        event.data
+      );
+
+
+      if (
+        !event.data ||
+        event.data.tipo !==
+          "BUFALOS_ASISTENCIA"
+      ) {
+
+        return;
+
+      }
+
+
+      const resultado =
+        event.data.resultado;
+
+
+      console.log(
+        "RESULTADO DEL SERVIDOR:",
+        resultado
+      );
+
+
+      recibirRespuestaServidor(
+        resultado
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "ERROR PROCESANDO RESPUESTA:",
+        error
+      );
+
+    }
+
+  },
+  false
+);
 
 
 /* =====================================================
@@ -461,6 +557,7 @@ const TIEMPO_LIBERAR_MS = 1500;
    ===================================================== */
 
 async function iniciarLector() {
+
 
   if (lectorActivo) {
     return;
@@ -470,6 +567,7 @@ async function iniciarLector() {
   const estado =
     document.getElementById("estado");
 
+
   const boton =
     document.getElementById("btnIniciar");
 
@@ -477,8 +575,10 @@ async function iniciarLector() {
   estado.className =
     "estado";
 
+
   estado.textContent =
     "🔎 Comprobando cámara...";
+
 
   boton.disabled =
     true;
@@ -487,13 +587,20 @@ async function iniciarLector() {
   try {
 
 
+    /* ================================================
+       COMPROBAR CÁMARA
+       ================================================ */
+
     if (
+
       !navigator.mediaDevices ||
+
       !navigator.mediaDevices.getUserMedia
+
     ) {
 
       throw new Error(
-        "El navegador no permite acceso a la cámara."
+        "El navegador no permite acceso a la cámara mediante getUserMedia."
       );
 
     }
@@ -512,14 +619,17 @@ async function iniciarLector() {
         await navigator.mediaDevices.getUserMedia({
 
           video: {
+
             facingMode: {
               ideal: "environment"
             }
+
           },
 
           audio: false
 
         });
+
 
     } catch (error) {
 
@@ -528,18 +638,31 @@ async function iniciarLector() {
         error
       );
 
+
       throw new Error(
+
         "La cámara no pudo ser activada. " +
+
         "Código: " +
+
         (
+
           error.name ||
+
           "DESCONOCIDO"
+
         ) +
+
         " - " +
+
         (
+
           error.message ||
+
           "Sin detalle"
+
         )
+
       );
 
     }
@@ -558,6 +681,10 @@ async function iniciarLector() {
     }
 
 
+    /* ================================================
+       DETECTAR CÁMARAS
+       ================================================ */
+
     estado.textContent =
       "📷 Detectando cámaras disponibles...";
 
@@ -573,8 +700,11 @@ async function iniciarLector() {
 
 
     if (
+
       !camaras ||
+
       camaras.length === 0
+
     ) {
 
       throw new Error(
@@ -584,25 +714,39 @@ async function iniciarLector() {
     }
 
 
+    /* ================================================
+       SELECCIONAR TRASERA
+       ================================================ */
+
     let cameraId = null;
 
 
     const camaraTrasera =
       camaras.find(function(camara) {
 
+
         const nombre =
           String(
+
             camara.label ||
+
             ""
+
           ).toLowerCase();
 
 
         return (
+
           nombre.includes("back") ||
+
           nombre.includes("rear") ||
+
           nombre.includes("environment") ||
+
           nombre.includes("trasera") ||
+
           nombre.includes("posterior")
+
         );
 
       });
@@ -627,18 +771,37 @@ async function iniciarLector() {
     );
 
 
+    /* ================================================
+       LIMPIAR LECTOR ANTERIOR
+       ================================================ */
+
     if (lector) {
 
       try {
+
         await lector.stop();
+
       } catch (error) {
-        console.log(error);
+
+        console.log(
+          "No había lector activo:",
+          error
+        );
+
       }
 
+
       try {
+
         await lector.clear();
+
       } catch (error) {
-        console.log(error);
+
+        console.log(
+          "No había lector anterior:",
+          error
+        );
+
       }
 
     }
@@ -648,6 +811,10 @@ async function iniciarLector() {
       .getElementById("reader")
       .innerHTML = "";
 
+
+    /* ================================================
+       CREAR LECTOR
+       ================================================ */
 
     lector =
       new Html5Qrcode("reader");
@@ -666,8 +833,11 @@ async function iniciarLector() {
         fps: 10,
 
         qrbox: {
+
           width: 250,
+
           height: 250
+
         },
 
         aspectRatio: 1.0,
@@ -686,7 +856,10 @@ async function iniciarLector() {
 
       function(errorMessage) {
 
-        // Ignorar errores normales de lectura.
+        /*
+         * Ignorar errores normales
+         * mientras busca QR.
+         */
 
       }
 
@@ -696,12 +869,14 @@ async function iniciarLector() {
     lectorActivo =
       true;
 
+
     procesando =
       false;
 
 
     boton.disabled =
       false;
+
 
     boton.textContent =
       "🟢 LECTOR ACTIVO";
@@ -710,6 +885,7 @@ async function iniciarLector() {
     estado.className =
       "estado estado-activo";
 
+
     estado.textContent =
       "🟢 LECTOR ACTIVO — Escanee un carnet";
 
@@ -717,6 +893,7 @@ async function iniciarLector() {
     mostrarMensaje(
 
       "📷 Cámara lista.<br><br>" +
+
       "Escanee el código QR del carnet.",
 
       "resultado-diagnostico"
@@ -725,6 +902,7 @@ async function iniciarLector() {
 
 
   } catch (error) {
+
 
     console.error(
       "ERROR COMPLETO DE CÁMARA:",
@@ -735,12 +913,14 @@ async function iniciarLector() {
     lectorActivo =
       false;
 
+
     procesando =
       false;
 
 
     boton.disabled =
       false;
+
 
     boton.textContent =
       "📷 INICIAR LECTOR";
@@ -749,6 +929,7 @@ async function iniciarLector() {
     estado.className =
       "estado estado-error";
 
+
     estado.textContent =
       "❌ No fue posible iniciar la cámara.";
 
@@ -756,15 +937,27 @@ async function iniciarLector() {
     mostrarMensaje(
 
       "<div class='diagnostico-titulo'>" +
+
       "❌ ERROR DE CÁMARA" +
+
       "</div>" +
 
       "<pre>" +
 
       escapar(
-        error && error.message
-          ? error.message
-          : String(error)
+
+        error &&
+
+        error.message
+
+          ?
+
+          error.message
+
+          :
+
+          String(error)
+
       ) +
 
       "</pre>" +
@@ -772,17 +965,21 @@ async function iniciarLector() {
       "<br>" +
 
       "<strong>" +
+
       "Información del navegador:" +
+
       "</strong>" +
 
       "<br>" +
 
       "Protocolo: " +
+
       escapar(location.protocol) +
 
       "<br>" +
 
       "Host: " +
+
       escapar(location.hostname) +
 
       "<br>" +
@@ -790,10 +987,19 @@ async function iniciarLector() {
       "getUserMedia: " +
 
       (
+
         navigator.mediaDevices &&
+
         navigator.mediaDevices.getUserMedia
-          ? "Disponible"
-          : "NO disponible"
+
+          ?
+
+          "Disponible"
+
+          :
+
+          "NO disponible"
+
       ),
 
       "resultado-diagnostico"
@@ -811,8 +1017,10 @@ async function iniciarLector() {
 
 async function detenerLector() {
 
+
   const estado =
     document.getElementById("estado");
+
 
   const boton =
     document.getElementById("btnIniciar");
@@ -820,11 +1028,22 @@ async function detenerLector() {
 
   if (!lector) {
 
+
+    lectorActivo =
+      false;
+
+
+    procesando =
+      false;
+
+
     estado.className =
       "estado";
 
+
     estado.textContent =
       "Lector detenido.";
+
 
     return;
 
@@ -833,9 +1052,13 @@ async function detenerLector() {
 
   try {
 
+
     if (lectorActivo) {
+
       await lector.stop();
+
     }
+
 
   } catch (error) {
 
@@ -864,8 +1087,10 @@ async function detenerLector() {
   lector =
     null;
 
+
   lectorActivo =
     false;
+
 
   procesando =
     false;
@@ -879,12 +1104,14 @@ async function detenerLector() {
   boton.disabled =
     false;
 
+
   boton.textContent =
     "📷 INICIAR LECTOR";
 
 
   estado.className =
     "estado";
+
 
   estado.textContent =
     "Lector detenido.";
@@ -898,19 +1125,32 @@ async function detenerLector() {
 
 function procesarQR(decodedText) {
 
+
   if (!lectorActivo) {
     return;
   }
 
+
+  /*
+   * SI ESTÁ PROCESANDO UN QR,
+   * IGNORAMOS CUALQUIER OTRO.
+   */
 
   if (procesando) {
     return;
   }
 
 
+  /*
+   * EL QR DEL CARNET CONTIENE
+   * ÚNICAMENTE EL DOCUMENTO.
+   */
+
   const documento =
     String(
+
       decodedText || ""
+
     ).trim();
 
 
@@ -923,14 +1163,27 @@ function procesarQR(decodedText) {
     Date.now();
 
 
+  /*
+   * BLOQUEAR EL MISMO QR
+   */
+
   if (
 
     documento === ultimoDocumento &&
 
-    ahora - tiempoUltimoDocumento <
-      BLOQUEO_MISMO_QR_MS
+    (
+
+      ahora -
+      tiempoUltimoDocumento
+
+    ) < BLOQUEO_MISMO_QR_MS
 
   ) {
+
+    console.log(
+      "QR REPETIDO IGNORADO:",
+      documento
+    );
 
     return;
 
@@ -940,8 +1193,14 @@ function procesarQR(decodedText) {
   ultimoDocumento =
     documento;
 
+
   tiempoUltimoDocumento =
     ahora;
+
+
+  /*
+   * BLOQUEO INMEDIATO.
+   */
 
   procesando =
     true;
@@ -955,18 +1214,33 @@ function procesarQR(decodedText) {
 
   const actividad =
     (
+
       document
         .getElementById("actividad")
         .value ||
+
       "Entrenamiento"
+
     ).trim();
+
+
+  console.log(
+    "QR DETECTADO:",
+    documento
+  );
 
 
   mostrarMensaje(
 
-    "🔎 Procesando carnet..." +
+    "🔎" +
 
-    "<br><br>" +
+    "<div class='jugador'>" +
+
+    "QR DETECTADO" +
+
+    "</div>" +
+
+    "<div class='documento'>" +
 
     "Documento: " +
 
@@ -974,7 +1248,13 @@ function procesarQR(decodedText) {
 
     escapar(documento) +
 
-    "</strong>",
+    "</strong>" +
+
+    "</div>" +
+
+    "<br>" +
+
+    "⏳ Verificando y registrando...",
 
     "resultado-diagnostico"
 
@@ -995,7 +1275,7 @@ function procesarQR(decodedText) {
 
 
 /* =====================================================
-   REGISTRAR ASISTENCIA
+   ENVIAR ASISTENCIA AL APPS SCRIPT
    ===================================================== */
 
 function registrarAsistenciaQR(
@@ -1012,9 +1292,9 @@ function registrarAsistenciaQR(
   try {
 
 
-    /* ================================================
-       CARGAR DATOS AL FORMULARIO
-       ================================================ */
+    /*
+     * PREPARAR FORMULARIO
+     */
 
     document
       .getElementById("postAccion")
@@ -1047,106 +1327,33 @@ function registrarAsistenciaQR(
 
 
     console.log(
-      "ENVIANDO POST:",
+      "ENVIANDO AL SERVIDOR:",
       {
-        accion: "registrarAsistenciaQR",
-        documento: documento,
-        tipo: tipo,
-        actividad: actividad
+        accion:
+          "registrarAsistenciaQR",
+
+        documento:
+          documento,
+
+        tipo:
+          tipo,
+
+        actividad:
+          actividad
+
       }
     );
 
 
-    /* ================================================
-       ENVIAR FORMULARIO
-       ================================================ */
+    /*
+     * ENVIAR POST.
+     *
+     * NO USAMOS FETCH.
+     */
 
     document
       .getElementById("formPostHub")
       .submit();
-
-
-    /* ================================================
-       MOSTRAR CONFIRMACIÓN DE ENVÍO
-       ================================================ */
-
-    totalEscaneos++;
-
-
-    document
-      .getElementById("contador")
-      .textContent =
-
-      "Escaneos enviados: " +
-
-      totalEscaneos;
-
-
-    mostrarMensaje(
-
-      "✅" +
-
-      "<div class='jugador'>" +
-
-      "REGISTRO ENVIADO" +
-
-      "</div>" +
-
-      "<div class='documento'>" +
-
-      "Documento: " +
-
-      escapar(documento) +
-
-      "</div>" +
-
-      "<br>" +
-
-      "<strong>" +
-
-      (
-
-        tipo === "PREASISTENCIA"
-
-          ?
-
-          "PREASISTENCIA ENVIADA"
-
-          :
-
-          "ASISTENCIA REAL ENVIADA"
-
-      ) +
-
-      "</strong>" +
-
-      "<br><br>" +
-
-      "<small>" +
-
-      "✅ Enviado al sistema BÚFALOS FC" +
-
-      "</small>",
-
-      "resultado-ok"
-
-    );
-
-
-    /*
-     * NO esperamos respuesta del servidor.
-     *
-     * El navegador ya entregó el POST
-     * directamente al Apps Script.
-     *
-     * Esto evita el problema de CORS
-     * que estaba provocando el timeout.
-     */
-
-
-    liberarProcesamiento(
-      TIEMPO_LIBERAR_MS
-    );
 
 
   } catch (error) {
@@ -1171,6 +1378,7 @@ function registrarAsistenciaQR(
       escapar(
 
         error &&
+
         error.message
 
           ?
@@ -1198,6 +1406,407 @@ function registrarAsistenciaQR(
 
 
 /* =====================================================
+   RECIBIR RESPUESTA DEL SERVIDOR
+   ===================================================== */
+
+function recibirRespuestaServidor(data) {
+
+
+  console.log(
+    "PROCESANDO RESPUESTA:",
+    data
+  );
+
+
+  if (!data) {
+
+
+    mostrarMensaje(
+
+      "❌" +
+
+      "<div class='jugador'>" +
+
+      "SIN RESPUESTA" +
+
+      "</div>" +
+
+      "<br>" +
+
+      "No se recibió una respuesta válida del servidor.",
+
+      "resultado-error"
+
+    );
+
+
+    liberarProcesamiento(2200);
+
+    return;
+
+  }
+
+
+  /* ===================================================
+     JUGADOR NO ENCONTRADO
+     =================================================== */
+
+  if (
+
+    data.estado ===
+      "NO_ENCONTRADO"
+
+    ||
+
+    (
+
+      data.ok === false &&
+
+      !data.jugador
+
+    )
+
+  ) {
+
+
+    mostrarMensaje(
+
+      "❌" +
+
+      "<div class='jugador'>" +
+
+      "JUGADOR NO ENCONTRADO" +
+
+      "</div>" +
+
+      "<div class='documento'>" +
+
+      "Documento: " +
+
+      escapar(
+
+        data.documento ||
+
+        ultimoDocumento ||
+
+        ""
+
+      ) +
+
+      "</div>" +
+
+      "<br>" +
+
+      "<div>" +
+
+      escapar(
+
+        data.mensaje ||
+
+        "El jugador no existe."
+
+      ) +
+
+      "</div>",
+
+      "resultado-error"
+
+    );
+
+
+    liberarProcesamiento(2200);
+
+    return;
+
+  }
+
+
+  /* ===================================================
+     DUPLICADO
+     =================================================== */
+
+  if (
+
+    data.duplicado === true
+
+    ||
+
+    data.duplicado === "true"
+
+    ||
+
+    data.estado ===
+      "DUPLICADO"
+
+  ) {
+
+
+    const jugador =
+      data.jugador || {};
+
+
+    mostrarMensaje(
+
+      "⚠️" +
+
+      "<div class='aviso-grande'>" +
+
+      "YA REGISTRADO" +
+
+      "</div>" +
+
+      "<div class='jugador'>" +
+
+      escapar(
+
+        data.nombre ||
+
+        jugador.nombre ||
+
+        ""
+
+      ) +
+
+      "</div>" +
+
+      "<div class='documento'>" +
+
+      "Documento: " +
+
+      escapar(
+
+        data.documento ||
+
+        jugador.documento ||
+
+        ultimoDocumento ||
+
+        ""
+
+      ) +
+
+      "</div>" +
+
+      "<br>" +
+
+      "<div>" +
+
+      escapar(
+
+        data.mensaje ||
+
+        "Esta asistencia ya estaba registrada para esta actividad."
+
+      ) +
+
+      "</div>" +
+
+      "<br>" +
+
+      "<strong>" +
+
+      "No se creó un registro adicional." +
+
+      "</strong>",
+
+      "resultado-duplicado"
+
+    );
+
+
+    liberarProcesamiento(2200);
+
+    return;
+
+  }
+
+
+  /* ===================================================
+     ERROR DEL SERVIDOR
+     =================================================== */
+
+  if (!data.ok) {
+
+
+    mostrarMensaje(
+
+      "❌" +
+
+      "<div class='aviso-grande'>" +
+
+      "NO REGISTRADO" +
+
+      "</div>" +
+
+      "<div>" +
+
+      escapar(
+
+        data.mensaje ||
+
+        "No fue posible registrar la asistencia."
+
+      ) +
+
+      "</div>" +
+
+      "<br>" +
+
+      "<small>" +
+
+      "Estado: " +
+
+      escapar(
+
+        String(
+
+          data.estado ||
+
+          ""
+
+        )
+
+      ) +
+
+      "</small>",
+
+      "resultado-error"
+
+    );
+
+
+    liberarProcesamiento(2500);
+
+    return;
+
+  }
+
+
+  /* ===================================================
+     REGISTRO CORRECTO
+     =================================================== */
+
+  totalEscaneos++;
+
+
+  document
+    .getElementById("contador")
+    .textContent =
+
+    "Escaneos registrados: " +
+
+    totalEscaneos;
+
+
+  const jugador =
+    data.jugador || {};
+
+
+  const tipo =
+    data.tipo ||
+
+    document
+      .getElementById("tipo")
+      .value;
+
+
+  mostrarMensaje(
+
+    "✅" +
+
+    "<div class='jugador'>" +
+
+    escapar(
+
+      jugador.nombre ||
+
+      data.nombre ||
+
+      ""
+
+    ) +
+
+    "</div>" +
+
+    "<div class='documento'>" +
+
+    "Documento: " +
+
+    escapar(
+
+      jugador.documento ||
+
+      data.documento ||
+
+      ultimoDocumento ||
+
+      ""
+
+    ) +
+
+    "</div>" +
+
+    "<div>" +
+
+    "Categoría: " +
+
+    escapar(
+
+      jugador.categoria ||
+
+      ""
+
+    ) +
+
+    "</div>" +
+
+    "<br>" +
+
+    "<strong>" +
+
+    (
+
+      String(tipo).toUpperCase() ===
+        "PREASISTENCIA"
+
+        ?
+
+        "PREASISTENCIA REGISTRADA"
+
+        :
+
+        "ASISTENCIA REAL REGISTRADA"
+
+    ) +
+
+    "</strong>" +
+
+    "<br><br>" +
+
+    "<small>" +
+
+    "✅ Registro guardado correctamente" +
+
+    "</small>",
+
+    "resultado-ok"
+
+  );
+
+
+  /*
+   * DESPUÉS DE 1,2 SEGUNDOS
+   * QUEDA LISTO PARA EL SIGUIENTE.
+   */
+
+  liberarProcesamiento(
+    TIEMPO_LIBERAR_MS
+  );
+
+}
+
+
+/* =====================================================
    LIBERAR PROCESAMIENTO
    ===================================================== */
 
@@ -1207,34 +1816,37 @@ function liberarProcesamiento(
 
 ) {
 
+
   setTimeout(
 
     function() {
+
 
       procesando =
         false;
 
 
-      if (lectorActivo) {
-
-        const estado =
-
-          document
-            .getElementById("estado");
-
-
-        estado.className =
-
-          "estado estado-activo";
-
-
-        estado.textContent =
-
-          "🟢 LECTOR ACTIVO — " +
-
-          "Escanee el siguiente carnet";
-
+      if (!lectorActivo) {
+        return;
       }
+
+
+      const estado =
+        document.getElementById("estado");
+
+
+      estado.className =
+        "estado estado-activo";
+
+
+      estado.textContent =
+        "🟢 LECTOR ACTIVO — Escanee el siguiente carnet";
+
+
+      console.log(
+        "LECTOR LISTO PARA SIGUIENTE QR"
+      );
+
 
     },
 
@@ -1257,10 +1869,9 @@ function mostrarMensaje(
 
 ) {
 
-  const resultado =
 
-    document
-      .getElementById("resultado");
+  const resultado =
+    document.getElementById("resultado");
 
 
   resultado.style.display =
@@ -1268,10 +1879,7 @@ function mostrarMensaje(
 
 
   resultado.className =
-
-    "resultado " +
-
-    clase;
+    "resultado " + clase;
 
 
   resultado.innerHTML =
@@ -1286,6 +1894,7 @@ function mostrarMensaje(
 
 function escapar(valor) {
 
+
   return String(
 
     valor || ""
@@ -1293,28 +1902,43 @@ function escapar(valor) {
   )
 
     .replace(
+
       /&/g,
+
       "&amp;"
+
     )
 
     .replace(
+
       /</g,
+
       "&lt;"
+
     )
 
     .replace(
+
       />/g,
+
       "&gt;"
+
     )
 
     .replace(
+
       /"/g,
+
       "&quot;"
+
     )
 
     .replace(
+
       /'/g,
+
       "&#039;"
+
     );
 
 }
