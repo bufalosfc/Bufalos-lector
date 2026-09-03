@@ -6,8 +6,8 @@
 
   <meta charset="UTF-8">
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+     content="width=device-width, initial-scale=1.0">
 
   <title>BÚFALOS FC - Lector QR</title>
 
@@ -81,14 +81,6 @@
       color: white;
     }
 
-    .btn-continuar {
-      background: #0d6efd;
-      color: white;
-      font-size: 18px;
-      padding: 16px;
-      margin-top: 10px;
-    }
-
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -155,14 +147,6 @@
       display: none !important;
     }
 
-    .bloqueado {
-      text-align: center;
-      padding: 15px;
-      background: #e9ecef;
-      border-radius: 10px;
-      font-weight: bold;
-    }
-
   </style>
 
 </head>
@@ -175,104 +159,90 @@
 
   <div class="panel">
 
-    <label for="tipo">
-      Tipo de registro
-    </label>
+```
+<label for="tipo">
+  Tipo de registro
+</label>
 
-    <select id="tipo">
+<select id="tipo">
 
-      <option value="PREASISTENCIA">
-        PREASISTENCIA
-      </option>
+  <option value="PREASISTENCIA">
+    PREASISTENCIA
+  </option>
 
-      <option value="ASISTENCIA">
-        ASISTENCIA
-      </option>
+  <option value="ASISTENCIA">
+    ASISTENCIA
+  </option>
 
-    </select>
-
-
-    <label for="actividad">
-      Actividad
-    </label>
-
-    <input
-      type="text"
-      id="actividad"
-      value="Entrenamiento"
-      placeholder="Nombre de la actividad"
-    >
+</select>
 
 
-    <button
-      class="btn-iniciar"
-      id="btnIniciar"
-      onclick="iniciarLector()">
+<label for="actividad">
+  Actividad
+</label>
 
-      📷 INICIAR LECTOR
+<input
+  type="text"
+  id="actividad"
+  value="Entrenamiento"
+  placeholder="Nombre de la actividad"
+>
 
-    </button>
+
+<button
+  class="btn-iniciar"
+  id="btnIniciar"
+  onclick="iniciarLector()">
+
+  📷 INICIAR LECTOR
+
+</button>
 
 
-    <button
-      class="btn-detener"
-      id="btnDetener"
-      onclick="detenerLector()"
-      disabled>
+<button
+  class="btn-detener"
+  id="btnDetener"
+  onclick="detenerLector()"
+  disabled>
 
-      ⛔ DETENER LECTOR
+  ⛔ DETENER LECTOR
 
-    </button>
+</button>
+```
 
   </div>
-
 
   <div class="panel">
 
-    <div id="reader"></div>
+```
+<div id="reader"></div>
 
-    <div
-      id="estadoLector"
-      class="estado">
+<div
+  id="estadoLector"
+  class="estado">
 
-      🔴 LECTOR DETENIDO
+  🔴 LECTOR DETENIDO
 
-    </div>
+</div>
 
 
-    <div
-      id="contador"
-      class="contador">
+<div
+  id="contador"
+  class="contador">
 
-      Registros confirmados: 0
+  Registros confirmados: 0
 
-    </div>
+</div>
+```
 
   </div>
-
 
   <div
     id="resultado"
     class="resultado oculto">
   </div>
 
-
-  <div
-    id="botonContinuar"
-    class="oculto">
-
-    <button
-      class="btn-continuar"
-      onclick="continuarSiguiente()">
-
-      🟢 CONTINUAR CON EL SIGUIENTE CARNET
-
-    </button>
-
-  </div>
-
 </div>
-
 
 <script>
 
@@ -282,6 +252,14 @@
 
 const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec";
+
+
+/*
+ * Tiempo de espera entre un resultado y el siguiente escaneo.
+ *
+ * 2000 = 2 segundos
+ */
+const TIEMPO_ENTRE_ESCANEOS = 2000;
 
 
 /* =========================================================
@@ -305,15 +283,6 @@ let contadorJSONP = 0;
 
 async function iniciarLector() {
 
-  if (carnetBloqueado) {
-
-    console.log("LECTOR BLOQUEADO");
-
-    return;
-
-  }
-
-
   if (lectorActivo) {
 
     return;
@@ -327,6 +296,10 @@ async function iniciarLector() {
       "🟡 INICIANDO CÁMARA...";
 
 
+    /*
+     * Creamos una nueva instancia solamente
+     * cuando realmente iniciamos el lector.
+     */
     html5QrCode =
       new Html5Qrcode("reader");
 
@@ -344,6 +317,9 @@ async function iniciarLector() {
     }
 
 
+    /*
+     * Buscamos preferiblemente la cámara trasera.
+     */
     let camaraSeleccionada =
       cameras[0].id;
 
@@ -394,8 +370,8 @@ async function iniciarLector() {
       function(errorMessage) {
 
         /*
-         * Errores normales de lectura.
-         * No hacemos nada.
+         * Los errores normales de lectura
+         * se ignoran.
          */
 
       }
@@ -404,6 +380,8 @@ async function iniciarLector() {
 
 
     lectorActivo = true;
+
+    carnetBloqueado = false;
 
 
     document.getElementById("btnIniciar").disabled =
@@ -423,11 +401,8 @@ async function iniciarLector() {
     );
 
 
-    ocultarContinuar();
-
-
     console.log(
-      "LECTOR INICIADO CORRECTAMENTE"
+      "LECTOR CONTINUO INICIADO CORRECTAMENTE"
     );
 
   } catch(error) {
@@ -439,6 +414,8 @@ async function iniciarLector() {
 
 
     lectorActivo = false;
+
+    carnetBloqueado = false;
 
 
     document.getElementById("btnIniciar").disabled =
@@ -508,6 +485,17 @@ async function detenerLector() {
   document.getElementById("estadoLector").innerHTML =
     "🔴 LECTOR DETENIDO";
 
+
+  mostrarResultado(
+    "",
+    "oculto"
+  );
+
+
+  console.log(
+    "LECTOR DETENIDO MANUALMENTE"
+  );
+
 }
 
 
@@ -515,13 +503,28 @@ async function detenerLector() {
    PROCESAR QR
 ========================================================= */
 
-async function procesarQR(decodedText) {
+function procesarQR(decodedText) {
 
+  /*
+   * SI ESTAMOS PROCESANDO OTRO CARNET,
+   * IGNORAMOS CUALQUIER NUEVA LECTURA.
+   */
   if (carnetBloqueado) {
 
     console.log(
-      "QR IGNORADO: CARNET BLOQUEADO"
+      "QR IGNORADO: PROCESANDO CARNET ANTERIOR"
     );
+
+    return;
+
+  }
+
+
+  /*
+   * SI EL LECTOR NO ESTÁ ACTIVO,
+   * NO PROCESAMOS.
+   */
+  if (!lectorActivo) {
 
     return;
 
@@ -541,6 +544,13 @@ async function procesarQR(decodedText) {
 
   /*
    * BLOQUEAMOS INMEDIATAMENTE.
+   *
+   * MUY IMPORTANTE:
+   * NO DETENEMOS LA CÁMARA.
+   *
+   * La cámara seguirá encendida,
+   * pero ignoraremos nuevos QR
+   * mientras esperamos la respuesta.
    */
   carnetBloqueado = true;
 
@@ -555,7 +565,7 @@ async function procesarQR(decodedText) {
   );
 
   console.log(
-    "LECTOR BLOQUEADO"
+    "LECTOR CONTINUO: CARNET BLOQUEADO TEMPORALMENTE"
   );
 
   console.log(
@@ -584,10 +594,7 @@ async function procesarQR(decodedText) {
 
 
   document.getElementById("estadoLector").innerHTML =
-    "🟡 CARNET DETECTADO — DETENIENDO LECTOR";
-
-
-  await detenerCamara();
+    "🟡 PROCESANDO CARNET...";
 
 
   const tipo =
@@ -600,59 +607,13 @@ async function procesarQR(decodedText) {
 
 
   /*
-   * AHORA ESPERAMOS LA RESPUESTA REAL.
+   * ENVIAMOS EL REGISTRO.
    */
   enviarRegistro(
     documento,
     tipo,
     actividad
   );
-
-}
-
-
-/* =========================================================
-   DETENER CÁMARA
-========================================================= */
-
-async function detenerCamara() {
-
-  try {
-
-    if (html5QrCode && lectorActivo) {
-
-      console.log(
-        "DETENIENDO CÁMARA..."
-      );
-
-
-      await html5QrCode.stop();
-
-
-      console.log(
-        "CÁMARA DETENIDA"
-      );
-
-    }
-
-  } catch(error) {
-
-    console.error(
-      "ERROR DETENIENDO CÁMARA:",
-      error
-    );
-
-  }
-
-
-  lectorActivo = false;
-
-
-  document.getElementById("btnIniciar").disabled =
-    true;
-
-  document.getElementById("btnDetener").disabled =
-    true;
 
 }
 
@@ -784,6 +745,9 @@ function enviarRegistro(
 
   /*
    * Error de conexión.
+   *
+   * En este caso NO desbloqueamos automáticamente,
+   * porque no sabemos si el registro llegó al servidor.
    */
   script.onerror = function() {
 
@@ -821,7 +785,14 @@ function enviarRegistro(
     );
 
 
-    mostrarContinuar();
+    document.getElementById("estadoLector").innerHTML =
+      "🔴 LECTOR DETENIDO — REVISE EL REGISTRO";
+
+
+    /*
+     * Detenemos el lector por seguridad.
+     */
+    detenerLector();
 
 
     limpiarJSONP(
@@ -833,7 +804,7 @@ function enviarRegistro(
 
 
   /*
-   * Seguridad: timeout.
+   * Timeout de seguridad.
    */
   const temporizador =
     setTimeout(function() {
@@ -865,14 +836,18 @@ function enviarRegistro(
 
         "<br><br>" +
 
-        "No se realizará otro escaneo hasta continuar.",
+        "Por seguridad, el lector fue detenido." +
+
+        "<br>" +
+
+        "Revise la hoja Asistencia antes de continuar.",
 
         "error"
 
       );
 
 
-      mostrarContinuar();
+      detenerLector();
 
 
       limpiarJSONP(
@@ -884,7 +859,7 @@ function enviarRegistro(
 
 
   /*
-   * Guardamos el timeout en el script.
+   * Guardamos el timeout.
    */
   script._bufalosTimeout =
     temporizador;
@@ -912,14 +887,18 @@ function procesarRespuestaServidor(
 
 
   /*
+   * =======================================================
    * REGISTRO NUEVO
+   * =======================================================
    */
+
   if (
     respuesta.ok === true &&
     estado === "REGISTRADO"
   ) {
 
     escaneosRegistrados++;
+
 
     document.getElementById("contador").innerHTML =
       "Registros confirmados: " +
@@ -963,22 +942,18 @@ function procesarRespuestaServidor(
 
       "<br><br>" +
 
-      "El sistema BÚFALOS FC confirmó el registro." +
-
-      "<br><br>" +
-
-      "<strong>El lector está detenido.</strong>" +
-
-      "<br>" +
-
-      "No se realizará otro escaneo hasta continuar.",
+      "El sistema BÚFALOS FC confirmó el registro.",
 
       "exito"
 
     );
 
 
-    mostrarContinuar();
+    /*
+     * ESPERAMOS 2 SEGUNDOS Y VOLVEMOS
+     * AUTOMÁTICAMENTE A ESCANEAR.
+     */
+    prepararSiguienteEscaneo();
 
 
     return;
@@ -987,8 +962,11 @@ function procesarRespuestaServidor(
 
 
   /*
+   * =======================================================
    * DUPLICADO
+   * =======================================================
    */
+
   if (
     respuesta.duplicado === true ||
     estado === "DUPLICADO"
@@ -1022,22 +1000,17 @@ function procesarRespuestaServidor(
       escaparHTML(
         respuesta.mensaje ||
         "Este jugador ya tiene registrado este evento."
-      ) +
-
-      "<br><br>" +
-
-      "<strong>El lector está detenido.</strong>" +
-
-      "<br>" +
-
-      "No se realizará otro escaneo hasta continuar.",
+      ),
 
       "duplicado"
 
     );
 
 
-    mostrarContinuar();
+    /*
+     * TAMBIÉN CONTINUAMOS AUTOMÁTICAMENTE.
+     */
+    prepararSiguienteEscaneo();
 
 
     return;
@@ -1046,8 +1019,11 @@ function procesarRespuestaServidor(
 
 
   /*
+   * =======================================================
    * JUGADOR NO ENCONTRADO
+   * =======================================================
    */
+
   if (
     estado === "NO_ENCONTRADO"
   ) {
@@ -1068,22 +1044,20 @@ function procesarRespuestaServidor(
       escaparHTML(
         respuesta.mensaje ||
         "No existe un jugador con este documento."
-      ) +
-
-      "<br><br>" +
-
-      "<strong>El lector está detenido.</strong>" +
-
-      "<br>" +
-
-      "No se realizará otro escaneo hasta continuar.",
+      ),
 
       "error"
 
     );
 
 
-    mostrarContinuar();
+    /*
+     * Un documento desconocido no representa
+     * un riesgo de duplicar un registro válido.
+     *
+     * Por eso continuamos automáticamente.
+     */
+    prepararSiguienteEscaneo();
 
 
     return;
@@ -1092,8 +1066,14 @@ function procesarRespuestaServidor(
 
 
   /*
-   * CUALQUIER OTRO ERROR
+   * =======================================================
+   * ERROR DESCONOCIDO
+   * =======================================================
+   *
+   * En errores inesperados detenemos el lector
+   * para seguridad.
    */
+
   mostrarResultado(
 
     "❌" +
@@ -1109,18 +1089,74 @@ function procesarRespuestaServidor(
 
     "<br><br>" +
 
-    "<strong>El lector está detenido.</strong>" +
-
-    "<br>" +
-
-    "No se realizará otro escaneo hasta continuar.",
+    "Por seguridad, el lector fue detenido.",
 
     "error"
 
   );
 
 
-  mostrarContinuar();
+  detenerLector();
+
+}
+
+
+/* =========================================================
+   PREPARAR SIGUIENTE ESCANEO
+========================================================= */
+
+function prepararSiguienteEscaneo() {
+
+  /*
+   * Verificamos que el lector siga activo.
+   */
+  if (!lectorActivo) {
+
+    return;
+
+  }
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟢 LECTOR ACTIVO — PREPARE EL SIGUIENTE CARNET";
+
+
+  /*
+   * Esperamos un pequeño tiempo para:
+   *
+   * 1. Evitar que la misma imagen del QR
+   *    vuelva a detectarse inmediatamente.
+   *
+   * 2. Dar tiempo al usuario para retirar
+   *    el carnet anterior.
+   */
+  setTimeout(function() {
+
+    if (!lectorActivo) {
+
+      return;
+
+    }
+
+
+    carnetBloqueado = false;
+
+
+    mostrarResultado(
+      "",
+      "oculto"
+    );
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE EL SIGUIENTE CARNET";
+
+
+    console.log(
+      "LECTOR DESBLOQUEADO — LISTO PARA SIGUIENTE CARNET"
+    );
+
+  }, TIEMPO_ENTRE_ESCANEOS);
 
 }
 
@@ -1143,18 +1179,14 @@ function mostrarErrorRespuesta() {
 
     "<br><br>" +
 
-    "<strong>El lector está detenido.</strong>" +
-
-    "<br>" +
-
-    "No se realizará otro escaneo hasta continuar.",
+    "Por seguridad, el lector fue detenido.",
 
     "error"
 
   );
 
 
-  mostrarContinuar();
+  detenerLector();
 
 }
 
@@ -1215,67 +1247,6 @@ function limpiarJSONP(
 
 
 /* =========================================================
-   CONTINUAR CON SIGUIENTE CARNET
-========================================================= */
-
-async function continuarSiguiente() {
-
-  console.log(
-    "================================"
-  );
-
-  console.log(
-    "CONTINUAR CON SIGUIENTE CARNET"
-  );
-
-  console.log(
-    "================================"
-  );
-
-
-  ocultarContinuar();
-
-
-  mostrarResultado(
-    "",
-    "oculto"
-  );
-
-
-  carnetBloqueado = false;
-
-
-  document.getElementById("estadoLector").innerHTML =
-    "🟡 PREPARANDO SIGUIENTE CARNET...";
-
-
-  await esperar(500);
-
-
-  await iniciarLector();
-
-}
-
-
-/* =========================================================
-   ESPERAR
-========================================================= */
-
-function esperar(milisegundos) {
-
-  return new Promise(function(resolve) {
-
-    setTimeout(
-      resolve,
-      milisegundos
-    );
-
-  });
-
-}
-
-
-/* =========================================================
    MOSTRAR RESULTADO
 ========================================================= */
 
@@ -1315,31 +1286,19 @@ function mostrarResultado(
 
 
 /* =========================================================
-   MOSTRAR CONTINUAR
+   ESPERAR
 ========================================================= */
 
-function mostrarContinuar() {
+function esperar(milisegundos) {
 
-  document
-    .getElementById("botonContinuar")
-    .classList.remove(
-      "oculto"
+  return new Promise(function(resolve) {
+
+    setTimeout(
+      resolve,
+      milisegundos
     );
 
-}
-
-
-/* =========================================================
-   OCULTAR CONTINUAR
-========================================================= */
-
-function ocultarContinuar() {
-
-  document
-    .getElementById("botonContinuar")
-    .classList.add(
-      "oculto"
-    );
+  });
 
 }
 
