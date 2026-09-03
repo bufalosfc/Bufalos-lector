@@ -85,6 +85,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
 .btn-start {
   width: 100%;
   background: #111;
@@ -218,9 +223,11 @@ pre {
 
   <div class="card">
 
+
     <label>
       Tipo de registro
     </label>
+
 
     <select id="tipo">
 
@@ -241,6 +248,7 @@ pre {
     <label>
       Actividad
     </label>
+
 
     <input
       id="actividad"
@@ -274,10 +282,12 @@ pre {
 
     </div>
 
+
   </div>
 
 
   <div class="card">
+
 
     <div id="reader"></div>
 
@@ -298,48 +308,77 @@ pre {
 
     </div>
 
+
   </div>
 
 
   <div class="card">
 
+
     <div class="info">
 
-      <strong>Cómo funciona</strong>
+
+      <strong>
+        Cómo funciona
+      </strong>
+
 
       <br><br>
 
+
       1. Selecciona PREASISTENCIA o ASISTENCIA REAL.
 
+
       <br>
+
 
       2. Escribe la actividad.
 
+
       <br>
+
 
       3. Pulsa INICIAR LECTOR.
 
+
       <br>
+
 
       4. Escanea el carnet.
 
+
       <br>
+
 
       5. El sistema identifica al jugador por Documento.
 
+
       <br>
+
 
       6. Registra automáticamente.
 
-      <br>
-
-      7. El lector queda listo para el siguiente carnet.
 
       <br>
 
-      8. No permite duplicar el mismo registro.
+
+      7. La cámara permanece activa.
+
+
+      <br>
+
+
+      8. Puedes escanear inmediatamente el siguiente carnet.
+
+
+      <br>
+
+
+      9. No permite duplicar el mismo registro.
+
 
     </div>
+
 
   </div>
 
@@ -359,7 +398,7 @@ const APPS_SCRIPT_URL =
 
 
 /* =====================================================
-   VARIABLES
+   VARIABLES PRINCIPALES
    ===================================================== */
 
 let lector = null;
@@ -370,9 +409,38 @@ let procesando = false;
 
 let totalEscaneos = 0;
 
+
+/*
+ * Último documento leído.
+ *
+ * Se utiliza como protección adicional contra
+ * múltiples lecturas del mismo QR.
+ */
+
 let ultimoDocumento = "";
 
 let tiempoUltimoDocumento = 0;
+
+
+/* =====================================================
+   CONFIGURACIÓN DE SEGURIDAD
+   ===================================================== */
+
+
+/*
+ * Tiempo durante el cual ignoramos una nueva lectura
+ * del mismo documento.
+ */
+
+const BLOQUEO_MISMO_QR_MS = 3500;
+
+
+/*
+ * Tiempo máximo que esperamos una respuesta
+ * del servidor.
+ */
+
+const TIMEOUT_SERVIDOR_MS = 10000;
 
 
 /* =====================================================
@@ -381,13 +449,21 @@ let tiempoUltimoDocumento = 0;
 
 async function iniciarLector() {
 
+
+  /*
+   * Si ya está funcionando no hacemos nada.
+   */
+
   if (lectorActivo) {
+
     return;
+
   }
 
 
   const estado =
     document.getElementById("estado");
+
 
   const boton =
     document.getElementById("btnIniciar");
@@ -396,88 +472,136 @@ async function iniciarLector() {
   estado.className =
     "estado";
 
+
   estado.textContent =
     "🔎 Comprobando cámara...";
 
-  boton.disabled = true;
+
+  boton.disabled =
+    true;
 
 
   try {
 
 
-    /* =============================================
-       1. COMPROBAR SOPORTE DEL NAVEGADOR
-       ============================================= */
+    /* ================================================
+       COMPROBAR SOPORTE
+       ================================================ */
 
-    if (!navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia) {
+    if (
+
+      !navigator.mediaDevices ||
+
+      !navigator.mediaDevices.getUserMedia
+
+    ) {
 
       throw new Error(
+
         "El navegador no permite acceso a la cámara mediante getUserMedia."
+
       );
 
     }
 
 
-    /* =============================================
-       2. PEDIR PERMISO DIRECTAMENTE
-       ============================================= */
+    /* ================================================
+       SOLICITAR PERMISO
+       ================================================ */
 
     estado.textContent =
       "📷 Solicitando permiso para la cámara...";
 
 
-    let stream = null;
+    let stream =
+      null;
 
 
     try {
 
+
       stream =
+
         await navigator.mediaDevices.getUserMedia({
+
           video: {
+
             facingMode: {
+
               ideal: "environment"
+
             }
+
           },
+
           audio: false
+
         });
+
 
     } catch (error) {
 
+
       console.error(
+
         "ERROR getUserMedia:",
+
         error
+
       );
 
+
       throw new Error(
+
         "La cámara no pudo ser activada. " +
+
         "Código: " +
-        (error.name || "DESCONOCIDO") +
+
+        (
+
+          error.name ||
+
+          "DESCONOCIDO"
+
+        ) +
+
         " - " +
-        (error.message || "Sin detalle")
+
+        (
+
+          error.message ||
+
+          "Sin detalle"
+
+        )
+
       );
 
     }
 
 
-    /* =============================================
-       3. DETENER STREAM DE PRUEBA
-       ============================================= */
+    /* ================================================
+       CERRAR STREAM DE PRUEBA
+       ================================================ */
 
     if (stream) {
 
-      stream.getTracks().forEach(function(track) {
 
-        track.stop();
+      stream
+        .getTracks()
+        .forEach(function(track) {
 
-      });
+          track.stop();
+
+        });
+
 
     }
 
 
-    /* =============================================
-       4. COMPROBAR CÁMARAS DISPONIBLES
-       ============================================= */
+    /* ================================================
+       DETECTAR CÁMARAS
+       ================================================ */
 
     estado.textContent =
       "📷 Detectando cámaras disponibles...";
@@ -488,39 +612,54 @@ async function iniciarLector() {
 
 
     console.log(
+
       "CÁMARAS DETECTADAS:",
+
       camaras
+
     );
 
 
-    if (!camaras || camaras.length === 0) {
+    if (
+
+      !camaras ||
+
+      camaras.length === 0
+
+    ) {
 
       throw new Error(
+
         "El navegador no detectó ninguna cámara."
+
       );
 
     }
 
 
-    /* =============================================
-       5. SELECCIONAR CÁMARA
-       ============================================= */
+    /* ================================================
+       SELECCIONAR CÁMARA TRASERA
+       ================================================ */
 
     let cameraId =
       null;
 
 
-    /*
-     * Intentamos encontrar una cámara trasera.
-     */
-
     const camaraTrasera =
+
       camaras.find(function(camara) {
 
+
         const nombre =
+
           String(
-            camara.label || ""
+
+            camara.label ||
+
+            ""
+
           ).toLowerCase();
+
 
         return (
 
@@ -536,48 +675,72 @@ async function iniciarLector() {
 
         );
 
+
       });
 
 
     if (camaraTrasera) {
 
+
       cameraId =
         camaraTrasera.id;
 
+
     } else {
 
-      /*
-       * Si no encontramos una cámara trasera,
-       * usamos la primera disponible.
-       */
 
       cameraId =
         camaras[0].id;
+
 
     }
 
 
     console.log(
+
       "CÁMARA SELECCIONADA:",
+
       cameraId
+
     );
 
 
-    /* =============================================
-       6. LIMPIAR LECTOR ANTERIOR
-       ============================================= */
+    /* ================================================
+       LIMPIAR LECTOR ANTERIOR
+       ================================================ */
 
     if (lector) {
+
+
+      try {
+
+        await lector.stop();
+
+      } catch (error) {
+
+        console.log(
+
+          "No había lector activo:",
+
+          error
+
+        );
+
+      }
+
 
       try {
 
         await lector.clear();
 
-      } catch (e) {
+      } catch (error) {
 
         console.log(
-          "No había lector anterior que limpiar.",
-          e
+
+          "No había lector anterior:",
+
+          error
+
         );
 
       }
@@ -585,13 +748,14 @@ async function iniciarLector() {
     }
 
 
-    document.getElementById("reader")
+    document
+      .getElementById("reader")
       .innerHTML = "";
 
 
-    /* =============================================
-       7. CREAR NUEVO LECTOR
-       ============================================= */
+    /* ================================================
+       CREAR LECTOR
+       ================================================ */
 
     lector =
       new Html5Qrcode("reader");
@@ -601,56 +765,103 @@ async function iniciarLector() {
       "📷 Iniciando lector QR...";
 
 
-    /* =============================================
-       8. INICIAR CÁMARA
-       ============================================= */
+    /* ================================================
+       INICIAR CÁMARA
+       ================================================ */
 
     await lector.start(
 
+
       cameraId,
+
 
       {
 
+        /*
+         * Cantidad de análisis por segundo.
+         */
+
         fps: 10,
 
+
+        /*
+         * Área de lectura.
+         */
+
         qrbox: {
+
           width: 250,
+
           height: 250
+
         },
 
+
         aspectRatio: 1.0,
+
 
         rememberLastUsedCamera: true
 
       },
 
 
+      /* ============================================
+         CALLBACK QR DETECTADO
+         ============================================ */
+
       function(decodedText) {
 
+
+        /*
+         * IMPORTANTE:
+         *
+         * NO detenemos la cámara.
+         *
+         * La cámara continúa funcionando
+         * mientras procesamos el registro.
+         */
+
         procesarQR(decodedText);
+
 
       },
 
 
+      /* ============================================
+         CALLBACK DE ERROR DE ESCANEO
+         ============================================ */
+
       function(errorMessage) {
 
+
         /*
-         * Estos errores son normales mientras
-         * la cámara busca un QR.
+         * No mostramos estos errores.
+         *
+         * html5-qrcode los genera normalmente
+         * mientras busca un código QR.
          */
 
       }
 
+
     );
 
 
-    /* =============================================
-       9. LECTOR ACTIVO
-       ============================================= */
+    /* ================================================
+       LECTOR LISTO
+       ================================================ */
 
-    lectorActivo = true;
+    lectorActivo =
+      true;
 
-    boton.disabled = false;
+
+    procesando =
+      false;
+
+
+    boton.disabled =
+      false;
+
 
     boton.textContent =
       "🟢 LECTOR ACTIVO";
@@ -667,6 +878,7 @@ async function iniciarLector() {
     mostrarMensaje(
 
       "📷 Cámara lista.<br><br>" +
+
       "Escanee el código QR del carnet.",
 
       "resultado-diagnostico"
@@ -678,15 +890,25 @@ async function iniciarLector() {
 
 
     console.error(
+
       "ERROR COMPLETO DE CÁMARA:",
+
       error
+
     );
 
 
-    lectorActivo = false;
+    lectorActivo =
+      false;
 
 
-    boton.disabled = false;
+    procesando =
+      false;
+
+
+    boton.disabled =
+      false;
+
 
     boton.textContent =
       "📷 INICIAR LECTOR";
@@ -702,11 +924,13 @@ async function iniciarLector() {
 
     mostrarMensaje(
 
+
       "<div class='diagnostico-titulo'>" +
 
       "❌ ERROR DE CÁMARA" +
 
       "</div>" +
+
 
       "<pre>" +
 
@@ -722,33 +946,51 @@ async function iniciarLector() {
 
       "</pre>" +
 
-      "<br>" +
-
-      "<strong>Información del navegador:</strong>" +
 
       "<br>" +
+
+
+      "<strong>" +
+
+      "Información del navegador:" +
+
+      "</strong>" +
+
+
+      "<br>" +
+
 
       "Protocolo: " +
 
       escapar(
+
         location.protocol
+
       ) +
 
+
       "<br>" +
+
 
       "Host: " +
 
       escapar(
+
         location.hostname
+
       ) +
+
 
       "<br>" +
 
+
       "getUserMedia: " +
+
 
       (
 
         navigator.mediaDevices &&
+
         navigator.mediaDevices.getUserMedia
 
           ? "Disponible"
@@ -756,6 +998,7 @@ async function iniciarLector() {
           : "NO disponible"
 
       ),
+
 
       "resultado-diagnostico"
 
@@ -772,8 +1015,10 @@ async function iniciarLector() {
 
 async function detenerLector() {
 
+
   const estado =
     document.getElementById("estado");
+
 
   const boton =
     document.getElementById("btnIniciar");
@@ -781,11 +1026,14 @@ async function detenerLector() {
 
   if (!lector) {
 
+
     estado.className =
       "estado";
 
+
     estado.textContent =
       "Lector detenido.";
+
 
     return;
 
@@ -794,17 +1042,25 @@ async function detenerLector() {
 
   try {
 
+
     if (lectorActivo) {
+
 
       await lector.stop();
 
+
     }
+
 
   } catch (error) {
 
+
     console.log(
+
       "Error al detener:",
+
       error
+
     );
 
   }
@@ -812,30 +1068,44 @@ async function detenerLector() {
 
   try {
 
+
     await lector.clear();
+
 
   } catch (error) {
 
+
     console.log(
+
       "Error al limpiar:",
+
       error
+
     );
 
   }
 
 
-  lector = null;
-
-  lectorActivo = false;
-
-  procesando = false;
+  lector =
+    null;
 
 
-  document.getElementById("reader")
+  lectorActivo =
+    false;
+
+
+  procesando =
+    false;
+
+
+  document
+    .getElementById("reader")
     .innerHTML = "";
 
 
-  boton.disabled = false;
+  boton.disabled =
+    false;
+
 
   boton.textContent =
     "📷 INICIAR LECTOR";
@@ -843,6 +1113,7 @@ async function detenerLector() {
 
   estado.className =
     "estado";
+
 
   estado.textContent =
     "Lector detenido.";
@@ -856,17 +1127,45 @@ async function detenerLector() {
 
 function procesarQR(decodedText) {
 
-  if (procesando) {
+
+  /*
+   * El lector debe estar activo.
+   */
+
+  if (!lectorActivo) {
+
     return;
+
+  }
+
+
+  /*
+   * Si todavía estamos esperando la respuesta
+   * del registro anterior, ignoramos nuevas lecturas.
+   */
+
+  if (procesando) {
+
+    return;
+
   }
 
 
   const documento =
-    String(decodedText || "").trim();
+
+    String(
+
+      decodedText ||
+
+      ""
+
+    ).trim();
 
 
   if (!documento) {
+
     return;
+
   }
 
 
@@ -874,18 +1173,25 @@ function procesarQR(decodedText) {
     Date.now();
 
 
-  /*
-   * Evita múltiples lecturas consecutivas
-   * del mismo QR.
-   */
+  /* ================================================
+     EVITAR REPETICIÓN DEL MISMO QR
+     ================================================ */
 
   if (
 
+
     documento === ultimoDocumento &&
 
-    ahora - tiempoUltimoDocumento < 5000
+
+    ahora -
+
+    tiempoUltimoDocumento <
+
+    BLOQUEO_MISMO_QR_MS
+
 
   ) {
+
 
     return;
 
@@ -900,253 +1206,272 @@ function procesarQR(decodedText) {
     ahora;
 
 
-  procesando = true;
+  procesando =
+    true;
 
+
+  /* ================================================
+     OBTENER DATOS DEL FORMULARIO
+     ================================================ */
 
   const tipo =
-    document.getElementById("tipo").value;
+
+    document
+      .getElementById("tipo")
+      .value;
 
 
   const actividad =
-    document.getElementById("actividad").value ||
-    "Entrenamiento";
 
+    (
+
+      document
+        .getElementById("actividad")
+        .value ||
+
+      "Entrenamiento"
+
+    ).trim();
+
+
+  /* ================================================
+     MENSAJE INICIAL
+     ================================================ */
 
   mostrarMensaje(
 
-    "🔎 Consultando jugador...",
+
+    "🔎 Registrando asistencia..." +
+
+
+    "<br><br>" +
+
+
+    "Documento: " +
+
+
+    "<strong>" +
+
+
+    escapar(documento) +
+
+
+    "</strong>",
+
 
     "resultado-diagnostico"
 
   );
 
 
-  const url =
-    APPS_SCRIPT_URL +
+  /* ================================================
+     UNA SOLA LLAMADA AL SERVIDOR
+     ================================================ */
 
-    "?accion=qr" +
+  registrarAsistenciaQR(
 
-    "&documento=" +
-    encodeURIComponent(documento);
+    documento,
 
+    tipo,
 
-  fetch(url)
+    actividad
 
-    .then(function(response) {
-
-      return response.text();
-
-    })
-
-
-    .then(function(texto) {
-
-      console.log(
-        "RESPUESTA GET:",
-        texto
-      );
-
-
-      let data;
-
-
-      try {
-
-        data =
-          JSON.parse(texto);
-
-      } catch (error) {
-
-        mostrarMensaje(
-
-          "<div class='diagnostico-titulo'>" +
-
-          "❌ RESPUESTA NO VÁLIDA" +
-
-          "</div>" +
-
-          "<pre>" +
-
-          escapar(texto) +
-
-          "</pre>",
-
-          "resultado-diagnostico"
-
-        );
-
-
-        liberarProcesamiento(5000);
-
-        return;
-
-      }
-
-
-      if (!data.ok) {
-
-        mostrarMensaje(
-
-          "❌" +
-
-          "<div class='jugador'>" +
-
-          "JUGADOR NO ENCONTRADO" +
-
-          "</div>" +
-
-          "<div>" +
-
-          escapar(
-
-            data.mensaje ||
-
-            "El jugador no existe."
-
-          ) +
-
-          "</div>",
-
-          "resultado-error"
-
-        );
-
-
-        liberarProcesamiento(3000);
-
-        return;
-
-      }
-
-
-      registrarAsistencia(
-
-        documento,
-
-        tipo,
-
-        actividad,
-
-        data.jugador
-
-      );
-
-    })
-
-
-    .catch(function(error) {
-
-      console.log(error);
-
-
-      mostrarMensaje(
-
-        "<div class='diagnostico-titulo'>" +
-
-        "❌ ERROR DE CONEXIÓN" +
-
-        "</div>" +
-
-        "<pre>" +
-
-        escapar(
-          error.toString()
-        ) +
-
-        "</pre>",
-
-        "resultado-diagnostico"
-
-      );
-
-
-      liberarProcesamiento(5000);
-
-    });
+  );
 
 }
 
 
 /* =====================================================
-   REGISTRAR ASISTENCIA
+   REGISTRAR ASISTENCIA QR
    ===================================================== */
 
-function registrarAsistencia(
+async function registrarAsistenciaQR(
+
 
   documento,
 
   tipo,
 
-  actividad,
+  actividad
 
-  jugador
 
 ) {
 
 
-  fetch(APPS_SCRIPT_URL, {
-
-    method: "POST",
-
-    headers: {
-
-      "Content-Type":
-        "application/x-www-form-urlencoded"
-
-    },
-
-    body:
-
-      "accion=registrarAsistencia" +
-
-      "&documento=" +
-      encodeURIComponent(documento) +
-
-      "&tipo=" +
-      encodeURIComponent(tipo) +
-
-      "&actividad=" +
-      encodeURIComponent(actividad) +
-
-      "&registradoPor=" +
-      encodeURIComponent("GitHub QR")
-
-  })
+  let controlador =
+    null;
 
 
-  .then(function(response) {
-
-    return response.text();
-
-  })
+  let temporizador =
+    null;
 
 
-  .then(function(texto) {
+  try {
+
+
+    /* ================================================
+       CONTROLADOR DE TIEMPO
+       ================================================ */
+
+    controlador =
+      new AbortController();
+
+
+    temporizador =
+
+      setTimeout(
+
+        function() {
+
+
+          controlador.abort();
+
+
+        },
+
+
+        TIMEOUT_SERVIDOR_MS
+
+      );
+
+
+    /* ================================================
+       PREPARAR DATOS
+       ================================================ */
+
+    const parametros =
+      new URLSearchParams();
+
+
+    parametros.append(
+
+      "accion",
+
+      "registrarAsistenciaQR"
+
+    );
+
+
+    parametros.append(
+
+      "documento",
+
+      documento
+
+    );
+
+
+    parametros.append(
+
+      "tipo",
+
+      tipo
+
+    );
+
+
+    parametros.append(
+
+      "actividad",
+
+      actividad
+
+    );
+
+
+    parametros.append(
+
+      "registradoPor",
+
+      "Hub QR"
+
+    );
+
+
+    /* ================================================
+       ENVIAR
+       ================================================ */
+
+    const response =
+
+      await fetch(
+
+        APPS_SCRIPT_URL,
+
+
+        {
+
+          method:
+            "POST",
+
+
+          headers: {
+
+            "Content-Type":
+
+              "application/x-www-form-urlencoded;charset=UTF-8"
+
+          },
+
+
+          body:
+
+            parametros.toString(),
+
+
+          signal:
+
+            controlador.signal
+
+        }
+
+      );
+
+
+    /* ================================================
+       LEER RESPUESTA
+       ================================================ */
+
+    const texto =
+
+      await response.text();
 
 
     console.log(
-      "RESPUESTA POST:",
+
+      "RESPUESTA registrarAsistenciaQR:",
+
       texto
+
     );
 
+
+    /* ================================================
+       CONVERTIR JSON
+       ================================================ */
 
     let data;
 
 
     try {
 
+
       data =
         JSON.parse(texto);
 
+
     } catch (error) {
+
 
       mostrarMensaje(
 
+
         "<div class='diagnostico-titulo'>" +
 
-        "⚠️ RESPUESTA DEL SERVIDOR" +
+        "⚠️ RESPUESTA NO VÁLIDA" +
 
         "</div>" +
+
 
         "<pre>" +
 
@@ -1154,70 +1479,61 @@ function registrarAsistencia(
 
         "</pre>",
 
+
         "resultado-diagnostico"
 
       );
 
 
-      liberarProcesamiento(5000);
+      liberarProcesamiento(2500);
+
 
       return;
 
     }
 
 
-    console.log(
-      "OBJETO RECIBIDO:",
-      data
-    );
-
-
-    /* =============================================
-       DUPLICADO
-       ============================================= */
+    /* ================================================
+       JUGADOR NO ENCONTRADO
+       ================================================ */
 
     if (
 
-      data.duplicado === true ||
 
-      data.duplicado === "true" ||
+      data.estado ===
 
-      data.estado === "DUPLICADO"
+        "NO_ENCONTRADO" ||
+
+
+      (
+
+        data.ok === false &&
+
+        !data.jugador
+
+      )
+
 
     ) {
 
 
       mostrarMensaje(
 
-        "<div class='aviso-grande'>" +
 
-        "⚠️ YA REGISTRADO" +
+        "❌" +
 
-        "</div>" +
 
         "<div class='jugador'>" +
 
-        escapar(
-
-          data.nombre ||
-
-          (
-
-            jugador &&
-
-            jugador.nombre
-
-          ) ||
-
-          ""
-
-        ) +
+        "JUGADOR NO ENCONTRADO" +
 
         "</div>" +
+
 
         "<div class='documento'>" +
 
         "Documento: " +
+
 
         escapar(
 
@@ -1227,68 +1543,174 @@ function registrarAsistencia(
 
         ) +
 
+
         "</div>" +
+
 
         "<br>" +
 
+
         "<div>" +
+
 
         escapar(
 
           data.mensaje ||
 
-          "Este registro ya existe para esta actividad."
+          "El jugador no existe."
 
         ) +
 
-        "</div>" +
 
-        "<br>" +
+        "</div>",
 
-        "<strong>" +
 
-        "No se creó un registro adicional." +
-
-        "</strong>" +
-
-        "<br><br>" +
-
-        "<small>" +
-
-        "Estado recibido: " +
-
-        escapar(
-
-          String(
-
-            data.estado || ""
-
-          )
-
-        ) +
-
-        "</small>",
-
-        "resultado-duplicado"
+        "resultado-error"
 
       );
 
 
-      liberarProcesamiento(5000);
+      liberarProcesamiento(2200);
+
 
       return;
 
     }
 
 
-    /* =============================================
-       ERROR
-       ============================================= */
+    /* ================================================
+       DUPLICADO
+       ================================================ */
+
+    if (
+
+
+      data.duplicado === true ||
+
+
+      data.duplicado === "true" ||
+
+
+      data.estado ===
+
+        "DUPLICADO"
+
+
+    ) {
+
+
+      const jugador =
+
+        data.jugador ||
+
+        {};
+
+
+      mostrarMensaje(
+
+
+        "<div class='aviso-grande'>" +
+
+        "⚠️ YA REGISTRADO" +
+
+        "</div>" +
+
+
+        "<div class='jugador'>" +
+
+        escapar(
+
+
+          data.nombre ||
+
+
+          jugador.nombre ||
+
+
+          ""
+
+        ) +
+
+
+        "</div>" +
+
+
+        "<div class='documento'>" +
+
+        "Documento: " +
+
+
+        escapar(
+
+
+          data.documento ||
+
+
+          jugador.documento ||
+
+
+          documento
+
+        ) +
+
+
+        "</div>" +
+
+
+        "<br>" +
+
+
+        "<div>" +
+
+
+        escapar(
+
+
+          data.mensaje ||
+
+
+          "Este registro ya existe para esta actividad."
+
+        ) +
+
+
+        "</div>" +
+
+
+        "<br>" +
+
+
+        "<strong>" +
+
+
+        "No se creó un registro adicional." +
+
+
+        "</strong>",
+
+
+        "resultado-duplicado"
+
+      );
+
+
+      liberarProcesamiento(2200);
+
+
+      return;
+
+    }
+
+
+    /* ================================================
+       ERROR DEL SERVIDOR
+       ================================================ */
 
     if (!data.ok) {
 
 
       mostrarMensaje(
+
 
         "<div class='aviso-grande'>" +
 
@@ -1296,9 +1718,12 @@ function registrarAsistencia(
 
         "</div>" +
 
+
         "<div>" +
 
+
         escapar(
+
 
           data.mensaje ||
 
@@ -1306,158 +1731,325 @@ function registrarAsistencia(
 
         ) +
 
+
         "</div>" +
+
 
         "<br>" +
 
-        "<div>" +
 
-        "Respuesta del servidor:" +
+        "<small>" +
 
-        "</div>" +
 
-        "<pre>" +
+        "Estado: " +
+
 
         escapar(
 
-          JSON.stringify(
+          String(
 
-            data,
+            data.estado ||
 
-            null,
-
-            2
+            ""
 
           )
 
         ) +
 
-        "</pre>",
+
+        "</small>",
+
 
         "resultado-error"
 
       );
 
 
-      liberarProcesamiento(5000);
+      liberarProcesamiento(2500);
+
 
       return;
 
     }
 
 
-    /* =============================================
+    /* ================================================
        REGISTRO CORRECTO
-       ============================================= */
+       ================================================ */
 
     totalEscaneos++;
 
 
-    document.getElementById("contador")
+    document
+      .getElementById("contador")
       .textContent =
 
+
       "Escaneos registrados: " +
+
 
       totalEscaneos;
 
 
+    const jugador =
+
+      data.jugador ||
+
+      {};
+
+
     mostrarMensaje(
+
 
       "✅" +
 
+
       "<div class='jugador'>" +
+
 
       escapar(
 
-        jugador.nombre
+
+        jugador.nombre ||
+
+
+        data.nombre ||
+
+
+        ""
 
       ) +
 
+
       "</div>" +
+
 
       "<div class='documento'>" +
 
+
       "Documento: " +
+
 
       escapar(
 
-        jugador.documento
+
+        jugador.documento ||
+
+
+        data.documento ||
+
+
+        documento
 
       ) +
+
 
       "</div>" +
 
+
       "<br>" +
+
 
       "<strong>" +
 
+
       (
 
-        tipo === "PREASISTENCIA"
 
-          ? "PREASISTENCIA REGISTRADA"
+        tipo ===
 
-          : "ASISTENCIA REAL REGISTRADA"
+        "PREASISTENCIA"
+
+
+          ?
+
+
+          "PREASISTENCIA REGISTRADA"
+
+
+          :
+
+
+          "ASISTENCIA REAL REGISTRADA"
+
 
       ) +
 
+
       "</strong>" +
+
 
       "<br><br>" +
 
+
       "<small>" +
+
 
       "Servidor: REGISTRADO" +
 
+
       "</small>",
+
 
       "resultado-ok"
 
     );
 
 
-    liberarProcesamiento(2500);
+    /*
+     * MUY IMPORTANTE:
+     *
+     * Aquí NO detenemos la cámara.
+     *
+     * Simplemente permitimos otro escaneo
+     * después de un pequeño intervalo.
+     */
 
-  })
+    liberarProcesamiento(1500);
 
 
-  .catch(function(error) {
-
-    console.log(error);
+  } catch (error) {
 
 
-    mostrarMensaje(
+    console.error(
 
-      "<div class='diagnostico-titulo'>" +
+      "ERROR registrarAsistenciaQR:",
 
-      "❌ ERROR AL REGISTRAR" +
-
-      "</div>" +
-
-      "<pre>" +
-
-      escapar(
-
-        error.toString()
-
-      ) +
-
-      "</pre>",
-
-      "resultado-diagnostico"
+      error
 
     );
 
 
-    liberarProcesamiento(5000);
+    /* ================================================
+       TIMEOUT
+       ================================================ */
 
-  });
+    if (
+
+
+      error &&
+
+
+      error.name ===
+
+        "AbortError"
+
+
+    ) {
+
+
+      mostrarMensaje(
+
+
+        "<div class='diagnostico-titulo'>" +
+
+        "⏱️ TIEMPO DE ESPERA AGOTADO" +
+
+        "</div>" +
+
+
+        "<div>" +
+
+
+        "El servidor no respondió a tiempo." +
+
+        "</div>" +
+
+
+        "<br>" +
+
+
+        "<small>" +
+
+
+        "La cámara seguirá disponible." +
+
+        "</small>",
+
+
+        "resultado-diagnostico"
+
+      );
+
+
+    } else {
+
+
+      /* ==============================================
+         ERROR DE CONEXIÓN
+         ============================================== */
+
+      mostrarMensaje(
+
+
+        "<div class='diagnostico-titulo'>" +
+
+        "❌ ERROR DE CONEXIÓN" +
+
+        "</div>" +
+
+
+        "<pre>" +
+
+
+        escapar(
+
+
+          error &&
+
+          error.toString
+
+
+            ?
+
+
+            error.toString()
+
+
+            :
+
+
+            String(error)
+
+
+        ) +
+
+
+        "</pre>",
+
+
+        "resultado-diagnostico"
+
+      );
+
+    }
+
+
+    liberarProcesamiento(2200);
+
+
+  } finally {
+
+
+    if (temporizador) {
+
+
+      clearTimeout(
+
+        temporizador
+
+      );
+
+
+    }
+
+  }
 
 }
 
 
 /* =====================================================
-   VOLVER A LECTOR ACTIVO
+   LIBERAR PROCESAMIENTO
    ===================================================== */
 
 function liberarProcesamiento(
@@ -1466,30 +2058,46 @@ function liberarProcesamiento(
 
 ) {
 
-  setTimeout(function() {
+
+  setTimeout(
+
+    function() {
 
 
-    procesando = false;
+      procesando =
+        false;
 
 
-    if (lectorActivo) {
-
-      document.getElementById("estado")
-        .className =
-        "estado estado-activo";
+      if (lectorActivo) {
 
 
-      document.getElementById("estado")
-        .textContent =
+        const estado =
 
-        "🟢 LECTOR ACTIVO — " +
-
-        "Escanee el siguiente carnet";
-
-    }
+          document
+            .getElementById("estado");
 
 
-  }, milisegundos);
+        estado.className =
+
+          "estado estado-activo";
+
+
+        estado.textContent =
+
+          "🟢 LECTOR ACTIVO — " +
+
+          "Escanee el siguiente carnet";
+
+
+      }
+
+
+    },
+
+
+    milisegundos
+
+  );
 
 }
 
@@ -1506,8 +2114,11 @@ function mostrarMensaje(
 
 ) {
 
+
   const resultado =
-    document.getElementById("resultado");
+
+    document
+      .getElementById("resultado");
 
 
   resultado.style.display =
@@ -1515,7 +2126,10 @@ function mostrarMensaje(
 
 
   resultado.className =
-    "resultado " + clase;
+
+    "resultado " +
+
+    clase;
 
 
   resultado.innerHTML =
@@ -1525,36 +2139,61 @@ function mostrarMensaje(
 
 
 /* =====================================================
-   SEGURIDAD
+   ESCAPAR TEXTO
    ===================================================== */
 
 function escapar(valor) {
 
-  return String(valor || "")
+
+  return String(
+
+    valor || ""
+
+  )
+
 
     .replace(
+
       /&/g,
+
       "&amp;"
+
     )
 
+
     .replace(
+
       /</g,
+
       "&lt;"
+
     )
 
+
     .replace(
+
       />/g,
+
       "&gt;"
+
     )
 
+
     .replace(
+
       /"/g,
+
       "&quot;"
+
     )
 
+
     .replace(
+
       /'/g,
+
       "&#039;"
+
     );
 
 }
