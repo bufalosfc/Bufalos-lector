@@ -328,51 +328,35 @@ pre {
 
       1. Selecciona PREASISTENCIA o ASISTENCIA REAL.
 
-
       <br>
-
 
       2. Escribe la actividad.
 
-
       <br>
-
 
       3. Pulsa INICIAR LECTOR.
 
-
       <br>
-
 
       4. Escanea el carnet.
 
-
       <br>
-
 
       5. El sistema identifica al jugador por Documento.
 
-
       <br>
-
 
       6. Registra automáticamente.
 
-
       <br>
-
 
       7. La cámara permanece activa.
 
-
       <br>
-
 
       8. Puedes escanear inmediatamente el siguiente carnet.
 
-
       <br>
-
 
       9. No permite duplicar el mismo registro.
 
@@ -433,11 +417,13 @@ async function iniciarLector() {
     return;
   }
 
+
   const estado =
     document.getElementById("estado");
 
   const boton =
     document.getElementById("btnIniciar");
+
 
   estado.className =
     "estado";
@@ -448,7 +434,13 @@ async function iniciarLector() {
   boton.disabled =
     true;
 
+
   try {
+
+
+    /* ================================================
+       COMPROBAR GET USER MEDIA
+       ================================================ */
 
     if (
       !navigator.mediaDevices ||
@@ -521,6 +513,10 @@ async function iniciarLector() {
     }
 
 
+    /* ================================================
+       DETECTAR CÁMARAS
+       ================================================ */
+
     estado.textContent =
       "📷 Detectando cámaras disponibles...";
 
@@ -546,6 +542,10 @@ async function iniciarLector() {
 
     }
 
+
+    /* ================================================
+       SELECCIONAR CÁMARA TRASERA
+       ================================================ */
 
     let cameraId = null;
 
@@ -590,25 +590,37 @@ async function iniciarLector() {
     );
 
 
+    /* ================================================
+       LIMPIAR LECTOR ANTERIOR
+       ================================================ */
+
     if (lector) {
 
       try {
+
         await lector.stop();
+
       } catch (error) {
+
         console.log(
           "No había lector activo:",
           error
         );
+
       }
 
 
       try {
+
         await lector.clear();
+
       } catch (error) {
+
         console.log(
           "No había lector anterior:",
           error
         );
+
       }
 
     }
@@ -618,6 +630,10 @@ async function iniciarLector() {
       .getElementById("reader")
       .innerHTML = "";
 
+
+    /* ================================================
+       CREAR NUEVO LECTOR
+       ================================================ */
 
     lector =
       new Html5Qrcode("reader");
@@ -650,10 +666,12 @@ async function iniciarLector() {
       function(decodedText) {
 
         /*
-         * NO detenemos la cámara.
+         * IMPORTANTE:
          *
-         * El lector permanece activo
-         * durante todo el proceso.
+         * La cámara NO se detiene.
+         *
+         * Cada QR se procesa directamente
+         * mediante POST al Apps Script.
          */
 
         procesarQR(decodedText);
@@ -679,11 +697,13 @@ async function iniciarLector() {
     procesando =
       false;
 
+
     boton.disabled =
       false;
 
     boton.textContent =
       "🟢 LECTOR ACTIVO";
+
 
     estado.className =
       "estado estado-activo";
@@ -716,6 +736,7 @@ async function iniciarLector() {
     procesando =
       false;
 
+
     boton.disabled =
       false;
 
@@ -737,11 +758,13 @@ async function iniciarLector() {
       "</div>" +
 
       "<pre>" +
+
       escapar(
         error && error.message
           ? error.message
           : String(error)
       ) +
+
       "</pre>" +
 
       "<br>" +
@@ -809,7 +832,9 @@ async function detenerLector() {
   try {
 
     if (lectorActivo) {
+
       await lector.stop();
+
     }
 
   } catch (error) {
@@ -883,6 +908,11 @@ function procesarQR(decodedText) {
   }
 
 
+  /*
+   * El QR del carnet contiene únicamente
+   * el número de Documento.
+   */
+
   const documento =
     String(
       decodedText || ""
@@ -890,7 +920,9 @@ function procesarQR(decodedText) {
 
 
   if (!documento) {
+
     return;
+
   }
 
 
@@ -898,10 +930,18 @@ function procesarQR(decodedText) {
     Date.now();
 
 
+  /*
+   * Evitar que el mismo QR sea leído
+   * varias veces consecutivas.
+   */
+
   if (
+
     documento === ultimoDocumento &&
+
     ahora - tiempoUltimoDocumento <
       BLOQUEO_MISMO_QR_MS
+
   ) {
 
     return;
@@ -936,7 +976,7 @@ function procesarQR(decodedText) {
 
   mostrarMensaje(
 
-    "🔎 Verificando jugador..." +
+    "🔎 Registrando jugador..." +
 
     "<br><br>" +
 
@@ -956,19 +996,27 @@ function procesarQR(decodedText) {
   /*
    * IMPORTANTE:
    *
-   * Primero verificamos el documento mediante GET.
+   * YA NO hacemos una petición GET.
    *
-   * Ya comprobamos que V53 responde correctamente
-   * para 80061104.
+   * Vamos directamente al POST.
+   *
+   * El Code.gs será quien:
+   *
+   * 1. Busque el jugador.
+   * 2. Compruebe si ya está registrado.
+   * 3. Registre la asistencia.
    */
 
-  verificarJugador(
+
+  registrarAsistenciaQR(
 
     documento,
 
     tipo,
 
-    actividad
+    actividad,
+
+    null
 
   );
 
@@ -976,305 +1024,6 @@ function procesarQR(decodedText) {
 
 
 /* =====================================================
-   VERIFICAR JUGADOR
-   ===================================================== */
-
-async function verificarJugador(
-
-  documento,
-
-  tipo,
-
-  actividad
-
-) {
-
-  let controlador =
-    null;
-
-  let temporizador =
-    null;
-
-
-  try {
-
-    controlador =
-      new AbortController();
-
-
-    temporizador =
-      setTimeout(
-
-        function() {
-
-          controlador.abort();
-
-        },
-
-        TIMEOUT_SERVIDOR_MS
-
-      );
-
-
-    const url =
-
-      APPS_SCRIPT_URL +
-
-      "?accion=qr&documento=" +
-
-      encodeURIComponent(documento);
-
-
-    console.log(
-      "VERIFICANDO JUGADOR:",
-      url
-    );
-
-
-    const response =
-
-      await fetch(
-
-        url,
-
-        {
-          method: "GET",
-          cache: "no-store",
-          signal: controlador.signal
-        }
-
-      );
-
-
-    const texto =
-      await response.text();
-
-
-    console.log(
-      "RESPUESTA VERIFICACIÓN:",
-      texto
-    );
-
-
-    let data;
-
-
-    try {
-
-      data =
-        JSON.parse(texto);
-
-    } catch (error) {
-
-      mostrarMensaje(
-
-        "<div class='diagnostico-titulo'>" +
-        "⚠️ RESPUESTA NO VÁLIDA" +
-        "</div>" +
-
-        "<pre>" +
-        escapar(texto) +
-        "</pre>",
-
-        "resultado-diagnostico"
-
-      );
-
-
-      liberarProcesamiento(2500);
-
-      return;
-
-    }
-
-
-    /*
-     * SI EL JUGADOR NO EXISTE
-     */
-
-    if (
-      !data.ok ||
-      data.estado !== "ENCONTRADO" ||
-      !data.jugador
-    ) {
-
-      mostrarMensaje(
-
-        "❌" +
-
-        "<div class='jugador'>" +
-        "JUGADOR NO ENCONTRADO" +
-        "</div>" +
-
-        "<div class='documento'>" +
-        "Documento: " +
-        escapar(
-          data.documento ||
-          documento
-        ) +
-        "</div>" +
-
-        "<br>" +
-
-        "<div>" +
-        escapar(
-          data.mensaje ||
-          "El jugador no existe."
-        ) +
-        "</div>",
-
-        "resultado-error"
-
-      );
-
-
-      liberarProcesamiento(2200);
-
-      return;
-
-    }
-
-
-    /*
-     * JUGADOR ENCONTRADO
-     */
-
-    const jugador =
-      data.jugador;
-
-
-    mostrarMensaje(
-
-      "👤" +
-
-      "<div class='jugador'>" +
-
-      escapar(
-        jugador.nombre || ""
-      ) +
-
-      "</div>" +
-
-      "<div class='documento'>" +
-
-      "Documento: " +
-
-      escapar(
-        jugador.documento ||
-        documento
-      ) +
-
-      "</div>" +
-
-      "<div>" +
-
-      "Categoría: " +
-
-      escapar(
-        jugador.categoria || ""
-      ) +
-
-      "</div>" +
-
-      "<br>" +
-
-      "⏳ Registrando asistencia...",
-
-      "resultado-diagnostico"
-
-    );
-
-
-    /*
-     * AHORA SÍ REGISTRAMOS LA ASISTENCIA
-     */
-
-    await registrarAsistenciaQR(
-
-      documento,
-
-      tipo,
-
-      actividad,
-
-      jugador
-
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      "ERROR verificarJugador:",
-      error
-    );
-
-
-    if (
-      error &&
-      error.name === "AbortError"
-    ) {
-
-      mostrarMensaje(
-
-        "<div class='diagnostico-titulo'>" +
-        "⏱️ TIEMPO DE ESPERA AGOTADO" +
-        "</div>" +
-
-        "<div>" +
-        "El servidor no respondió a tiempo." +
-        "</div>" +
-
-        "<br>" +
-
-        "<small>" +
-        "La cámara seguirá disponible." +
-        "</small>",
-
-        "resultado-diagnostico"
-
-      );
-
-    } else {
-
-      mostrarMensaje(
-
-        "<div class='diagnostico-titulo'>" +
-        "❌ ERROR DE CONEXIÓN" +
-        "</div>" +
-
-        "<pre>" +
-        escapar(
-          error && error.toString
-            ? error.toString()
-            : String(error)
-        ) +
-        "</pre>",
-
-        "resultado-diagnostico"
-
-      );
-
-    }
-
-
-    liberarProcesamiento(2200);
-
-
-  } finally {
-
-    if (temporizador) {
-
-      clearTimeout(
-        temporizador
-      );
-
-    }
-
-  }
-
-}
-      /* =====================================================
    REGISTRAR ASISTENCIA QR
    ===================================================== */
 
@@ -1360,8 +1109,16 @@ async function registrarAsistenciaQR(
     );
 
 
+    console.log(
+      "ENVIANDO REGISTRO:",
+      documento,
+      tipo,
+      actividad
+    );
+
+
     /* ================================================
-       ENVIAR AL CODE.GS
+       ENVIAR DIRECTAMENTE AL CODE.GS
        ================================================ */
 
     const response =
@@ -1407,7 +1164,7 @@ async function registrarAsistenciaQR(
 
 
     /* ================================================
-       CONVERTIR JSON
+       CONVERTIR RESPUESTA A JSON
        ================================================ */
 
     let data;
@@ -1787,12 +1544,7 @@ async function registrarAsistenciaQR(
 
 
     /*
-     * IMPORTANTE:
-     *
-     * NO detenemos la cámara.
-     *
-     * Solo liberamos el procesamiento
-     * después de un pequeño intervalo.
+     * La cámara permanece activa.
      */
 
     liberarProcesamiento(1500);
@@ -2062,7 +1814,9 @@ function escapar(valor) {
     );
 
 }
-      </script>
+
+
+</script>
 
 </body>
 
