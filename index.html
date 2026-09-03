@@ -1,1161 +1,1327 @@
-const SS = SpreadsheetApp.getActiveSpreadsheet();
+<!DOCTYPE html>
 
-const HOJAS = {
-  JUGADORES: "Jugadores",
-  ASISTENCIA: "Asistencia",
-  PAGOS: "Pagos", // hoja histórica/compatibilidad
-  CARTERA: "Cartera",
-  MOVIMIENTOS: "MovimientosCartera",
-  ENTRENAMIENTOS: "Entrenamientos",
-  CONFIG: "Config"
-};
+<html>
+<head>
+  <base target="_top">
 
-const VERSION_SISTEMA = "V50";
+  <meta charset="UTF-8">
 
-/* =====================================================
-   ENTRADA PRINCIPAL
-   ===================================================== */
-function doGet(e) {
-  e = e || { parameter: {} };
-  const jugador = normalizarDocumento(e.parameter.jugador || "");
-  const accion = String(e.parameter.accion || "").trim();
+<meta name="viewport"
+     content="width=device-width, initial-scale=1.0">
 
-  if (jugador) {
-    const template = HtmlService.createTemplateFromFile("Index");
-    template.jugadorPublico = jugador;
-    template.modoPublico = true;
-    return template.evaluate()
-      .setTitle("Carnet BÚFALOS FC")
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  <title>BÚFALOS FC - Lector QR</title>
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .contenedor {
+      max-width: 700px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 13px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-iniciar {
+      background: #198754;
+      color: white;
+    }
+
+    .btn-detener {
+      background: #dc3545;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 500px;
+      margin: 15px auto;
+    }
+
+    .estado {
+      text-align: center;
+      font-weight: bold;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      background: #eee;
+    }
+
+    .resultado {
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 15px;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .diagnostico {
+      background: #fff3cd;
+      color: #664d03;
+    }
+
+    .exito {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #842029;
+    }
+
+    .duplicado {
+      background: #fff3cd;
+      color: #664d03;
+    }
+
+    .jugador {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .contador {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .oculto {
+      display: none !important;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="contenedor">
+
+  <h1>⚽ BÚFALOS FC</h1>
+
+  <div class="panel">
+
+```
+<label for="tipo">
+  Tipo de registro
+</label>
+
+<select id="tipo">
+
+  <option value="PREASISTENCIA">
+    PREASISTENCIA
+  </option>
+
+  <option value="ASISTENCIA">
+    ASISTENCIA
+  </option>
+
+</select>
+
+
+<label for="actividad">
+  Actividad
+</label>
+
+<input
+  type="text"
+  id="actividad"
+  value="Entrenamiento"
+  placeholder="Nombre de la actividad"
+>
+
+
+<button
+  class="btn-iniciar"
+  id="btnIniciar"
+  onclick="iniciarLector()">
+
+  📷 INICIAR LECTOR
+
+</button>
+
+
+<button
+  class="btn-detener"
+  id="btnDetener"
+  onclick="detenerLector()"
+  disabled>
+
+  ⛔ DETENER LECTOR
+
+</button>
+```
+
+  </div>
+
+  <div class="panel">
+
+```
+<div id="reader"></div>
+
+<div
+  id="estadoLector"
+  class="estado">
+
+  🔴 LECTOR DETENIDO
+
+</div>
+
+
+<div
+  id="contador"
+  class="contador">
+
+  Registros confirmados: 0
+
+</div>
+```
+
+  </div>
+
+  <div
+    id="resultado"
+    class="resultado oculto">
+  </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+
+const APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec";
+
+
+/*
+ * Tiempo de espera entre un resultado y el siguiente escaneo.
+ *
+ * 2000 = 2 segundos
+ */
+const TIEMPO_ENTRE_ESCANEOS = 2000;
+
+
+/* =========================================================
+   VARIABLES PRINCIPALES
+========================================================= */
+
+let html5QrCode = null;
+
+let lectorActivo = false;
+
+let carnetBloqueado = false;
+
+let escaneosRegistrados = 0;
+
+let contadorJSONP = 0;
+
+
+/* =========================================================
+   INICIAR LECTOR
+========================================================= */
+
+async function iniciarLector() {
+
+  if (lectorActivo) {
+
+    return;
+
   }
 
-  if (accion === "qr") {
-    const documento = normalizarDocumento(e.parameter.documento || "");
-    if (!documento) return respuestaJSON({ ok: false, estado: "ERROR", mensaje: "QR sin documento." });
-    return respuestaJSON(buscarJugador(documento));
-  }
 
-  const template = HtmlService.createTemplateFromFile("Index");
-  template.jugadorPublico = "";
-  template.modoPublico = false;
-  return template.evaluate()
-    .setTitle("BÚFALOS FC - Gestión Deportiva")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-}
-
-function doPost(e) {
   try {
-    const datos = e && e.parameter ? e.parameter : {};
-    const accion = String(datos.accion || "").trim();
-    if (accion === "registrarAsistencia") {
-      return respuestaJSON(registrarAsistencia({
-        documento: datos.documento || "",
-        tipo: datos.tipo || "ASISTENCIA",
-        actividad: datos.actividad || "Actividad",
-        registradoPor: datos.registradoPor || "QR"
-      }));
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟡 INICIANDO CÁMARA...";
+
+
+    /*
+     * Creamos una nueva instancia solamente
+     * cuando realmente iniciamos el lector.
+     */
+    html5QrCode =
+      new Html5Qrcode("reader");
+
+
+    const cameras =
+      await Html5Qrcode.getCameras();
+
+
+    if (!cameras || cameras.length === 0) {
+
+      throw new Error(
+        "No se encontró ninguna cámara."
+      );
+
     }
-    return respuestaJSON({ ok: false, estado: "ERROR", mensaje: "Acción no reconocida." });
-  } catch (error) {
-    return respuestaJSON({ ok: false, estado: "ERROR", mensaje: error && error.message ? error.message : "Error desconocido." });
-  }
-}
 
-function respuestaJSON(datos) {
-  return ContentService.createTextOutput(JSON.stringify(datos)).setMimeType(ContentService.MimeType.JSON);
-}
 
-/* =====================================================
-   CONFIGURACIÓN / ESTRUCTURA
-   ===================================================== */
-function setupSistema() {
-  crearHoja(HOJAS.JUGADORES, [
-    "Documento", "Nombre", "FechaNacimiento", "Edad", "Categoria",
-    "WhatsApp", "Localidad", "Estado", "Foto", "Uniforme", "Correo", "FechaRegistro"
-  ]);
+    /*
+     * Buscamos preferiblemente la cámara trasera.
+     */
+    let camaraSeleccionada =
+      cameras[0].id;
 
-  crearHoja(HOJAS.ASISTENCIA, [
-    "Fecha", "Hora", "Documento", "Nombre", "Categoria", "Actividad", "Tipo", "RegistradoPor"
-  ]);
 
-  crearHoja(HOJAS.PAGOS, [
-    "Fecha", "Documento", "Nombre", "Periodo", "Concepto", "ValorCobrado", "ValorPagado",
-    "Saldo", "Medio", "Referencia", "Estado", "Observacion"
-  ]);
+    const camaraTrasera =
+      cameras.find(function(camara) {
 
-  crearHoja(HOJAS.ENTRENAMIENTOS, ["Fecha", "Hora", "Actividad", "Tipo", "Estado"]);
-  crearHoja(HOJAS.CONFIG, ["Parametro", "Valor"]);
-  crearHoja(HOJAS.CARTERA, encabezadosCartera(anioActual()));
-  crearHoja(HOJAS.MOVIMIENTOS, [
-    "Fecha", "Documento", "Nombre", "TipoMovimiento", "Valor", "Medio",
-    "Referencia", "Observacion", "Usuario", "Periodo", "Concepto", "SaldoDespues"
-  ]);
+        const nombre =
+          String(camara.label || "").toLowerCase();
 
-  configurarValoresIniciales();
-  sincronizarJugadoresCartera();
+        return (
+          nombre.includes("back") ||
+          nombre.includes("rear") ||
+          nombre.includes("trasera") ||
+          nombre.includes("environment")
+        );
 
-  return { ok: true, mensaje: "Sistema BÚFALOS FC configurado correctamente." };
-}
+      });
 
-function crearHoja(nombre, encabezados) {
-  let hoja = SS.getSheetByName(nombre);
-  if (!hoja) hoja = SS.insertSheet(nombre);
-  if (hoja.getLastRow() === 0) {
-    hoja.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
-  }
-  hoja.setFrozenRows(1);
-}
 
-function encabezadosCartera(anio) {
-  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  const h = ["Documento", "Nombre", "SaldoAnterior", "Inscripcion", "Uniforme", "Poliza", "Otros"];
-  meses.forEach(m => h.push("Entrenos_" + anio + "_" + m));
-  meses.forEach(m => h.push("Partidos_" + anio + "_" + m));
-  h.push("SaldoActual", "Actualizado");
-  return h;
-}
+    if (camaraTrasera) {
 
-function anioActual() {
-  return new Date().getFullYear();
-}
+      camaraSeleccionada =
+        camaraTrasera.id;
 
-function configurarValoresIniciales() {
-  const hoja = obtenerHoja(HOJAS.CONFIG);
-  if (!hoja) return;
-  const datos = hoja.getDataRange().getValues();
-  const existentes = {};
-  datos.slice(1).forEach(fila => { if (fila[0]) existentes[String(fila[0])] = true; });
-  const nuevos = [];
-  if (!existentes.PIN) nuevos.push(["PIN", "1234"]);
-  if (!existentes.NombreClub) nuevos.push(["NombreClub", "BÚFALOS FC"]);
-  if (!existentes.URLCarnet) nuevos.push(["URLCarnet", ScriptApp.getService().getUrl()]);
-  if (!existentes.Moneda) nuevos.push(["Moneda", "COP"]);
-  if (!existentes.Version) nuevos.push(["Version", VERSION_SISTEMA]);
-  if (nuevos.length) hoja.getRange(hoja.getLastRow() + 1, 1, nuevos.length, 2).setValues(nuevos);
-}
-
-function asegurarEstructuraMovimientosCartera() {
-  let hoja = obtenerHoja(HOJAS.MOVIMIENTOS);
-  if (!hoja) {
-    crearHoja(HOJAS.MOVIMIENTOS, [
-      "Fecha", "Documento", "Nombre", "TipoMovimiento", "Valor", "Medio",
-      "Referencia", "Observacion", "Usuario", "Periodo", "Concepto", "SaldoDespues"
-    ]);
-    hoja = obtenerHoja(HOJAS.MOVIMIENTOS);
-    return hoja;
-  }
-  if (hoja.getLastColumn() < 12 || String(hoja.getRange(1, 12).getValue() || "") !== "SaldoDespues") {
-    hoja.getRange(1, 12).setValue("SaldoDespues");
-  }
-  return hoja;
-}
-
-function asegurarEstructuraCartera() {
-  let hoja = obtenerHoja(HOJAS.CARTERA);
-  if (!hoja) {
-    crearHoja(HOJAS.CARTERA, encabezadosCartera(anioActual()));
-    hoja = obtenerHoja(HOJAS.CARTERA);
-  }
-  return hoja;
-}
-
-function sincronizarJugadoresCartera() {
-  const hoja = asegurarEstructuraCartera();
-  const jugadores = listarJugadores();
-  if (!jugadores.length) return;
-
-  const existentes = {};
-  if (hoja.getLastRow() >= 2) {
-    hoja.getRange(2, 1, hoja.getLastRow() - 1, 1).getValues().forEach((r, i) => {
-      const d = normalizarDocumento(r[0]);
-      if (d) existentes[d] = i + 2;
-    });
-  }
-
-  const encabezados = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
-  const colSaldoAnterior = encabezados.indexOf("SaldoAnterior") + 1;
-  const colSaldoActual = encabezados.indexOf("SaldoActual") + 1;
-  const colActualizado = encabezados.indexOf("Actualizado") + 1;
-
-  const nuevas = [];
-  jugadores.forEach(j => {
-    if (!existentes[j.documento]) {
-      const fila = new Array(encabezados.length).fill("");
-      fila[0] = j.documento;
-      fila[1] = j.nombre;
-      if (colSaldoAnterior) fila[colSaldoAnterior - 1] = 0;
-      if (colSaldoActual) fila[colSaldoActual - 1] = 0;
-      if (colActualizado) fila[colActualizado - 1] = new Date();
-      nuevas.push(fila);
     }
-  });
-  if (nuevas.length) hoja.getRange(hoja.getLastRow() + 1, 1, nuevas.length, encabezados.length).setValues(nuevas);
-}
 
-/* =====================================================
-   UTILIDADES
-   ===================================================== */
-function normalizarDocumento(documento) {
-  return String(documento || "").trim().replace(/\s+/g, "");
-}
 
-function obtenerHoja(nombre) { return SS.getSheetByName(nombre); }
+    await html5QrCode.start(
 
-function fechaHoy() {
-  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
-}
+      camaraSeleccionada,
 
-function horaActual() {
-  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "HH:mm:ss");
-}
+      {
+        fps: 10,
 
-function obtenerFechaPago(valor) {
-  if (valor === undefined || valor === null || String(valor).trim() === "") return new Date();
-  if (valor instanceof Date && !isNaN(valor.getTime())) return valor;
-  const texto = String(valor).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-    const p = texto.split("-");
-    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12, 0, 0);
+        qrbox: {
+          width: 250,
+          height: 250
+        },
+
+        aspectRatio: 1.0,
+
+        rememberLastUsedCamera: true
+      },
+
+      procesarQR,
+
+      function(errorMessage) {
+
+        /*
+         * Los errores normales de lectura
+         * se ignoran.
+         */
+
+      }
+
+    );
+
+
+    lectorActivo = true;
+
+    carnetBloqueado = false;
+
+
+    document.getElementById("btnIniciar").disabled =
+      true;
+
+    document.getElementById("btnDetener").disabled =
+      false;
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE UN CARNET";
+
+
+    mostrarResultado(
+      "",
+      "oculto"
+    );
+
+
+    console.log(
+      "LECTOR CONTINUO INICIADO CORRECTAMENTE"
+    );
+
+  } catch(error) {
+
+    console.error(
+      "ERROR INICIANDO LECTOR:",
+      error
+    );
+
+
+    lectorActivo = false;
+
+    carnetBloqueado = false;
+
+
+    document.getElementById("btnIniciar").disabled =
+      false;
+
+    document.getElementById("btnDetener").disabled =
+      true;
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "❌ NO SE PUDO INICIAR LA CÁMARA";
+
+
+    mostrarResultado(
+
+      "❌ " +
+      escaparHTML(
+        error.message ||
+        "Error desconocido."
+      ),
+
+      "error"
+
+    );
+
   }
-  const fecha = new Date(texto);
-  return isNaN(fecha.getTime()) ? new Date() : fecha;
+
 }
 
-function formatearFecha(fecha) {
-  if (!fecha) return "";
-  if (fecha instanceof Date && !isNaN(fecha.getTime())) {
-    return Utilities.formatDate(fecha, Session.getScriptTimeZone(), "yyyy-MM-dd");
-  }
-  return String(fecha);
-}
 
-function normalizarPeriodo(periodo) {
-  if (periodo === undefined || periodo === null) return "";
-  const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-  if (periodo instanceof Date && !isNaN(periodo.getTime())) return meses[periodo.getMonth()] + " " + periodo.getFullYear();
-  const texto = String(periodo).trim();
-  if (!texto) return "";
-  let m = texto.match(/^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/);
-  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 12) return meses[Number(m[2]) - 1] + " " + m[1];
-  m = texto.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)\s+(\d{4})$/);
-  if (m) {
-    const i = meses.findIndex(x => x.toLowerCase() === m[1].toLowerCase());
-    if (i !== -1) return meses[i] + " " + m[2];
-  }
-  const f = new Date(texto);
-  return isNaN(f.getTime()) ? texto : meses[f.getMonth()] + " " + f.getFullYear();
-}
+/* =========================================================
+   DETENER LECTOR MANUALMENTE
+========================================================= */
 
-function numero(valor) {
-  if (typeof valor === "number") return valor;
-  let texto = String(valor || "").trim().replace(/\$/g, "").replace(/\s/g, "");
-  if (!texto) return 0;
-  if (texto.indexOf(",") !== -1 && texto.indexOf(".") !== -1) texto = texto.replace(/\./g, "").replace(",", ".");
-  else if (texto.indexOf(",") !== -1) {
-    const p = texto.split(",");
-    texto = p[1] && p[1].length === 2 ? texto.replace(",", ".") : texto.replace(/,/g, "");
-  } else if (texto.indexOf(".") !== -1) {
-    const p = texto.split(".");
-    if (!(p.length === 2 && p[1].length === 2)) texto = texto.replace(/\./g, "");
-  }
-  return Number(texto) || 0;
-}
+async function detenerLector() {
 
-function calcularEdad(fechaNacimiento) {
-  if (!fechaNacimiento) return "";
-  let fecha;
-  if (fechaNacimiento instanceof Date) fecha = fechaNacimiento;
-  else {
-    const texto = String(fechaNacimiento).trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-      const p = texto.split("-");
-      fecha = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-    } else fecha = new Date(texto);
-  }
-  if (isNaN(fecha.getTime())) return "";
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - fecha.getFullYear();
-  const mes = hoy.getMonth() - fecha.getMonth();
-  if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) edad--;
-  return edad;
-}
+  try {
 
-/* =====================================================
-   PIN
-   ===================================================== */
-function verificarPIN(pin) {
-  const hoja = obtenerHoja(HOJAS.CONFIG);
-  if (!hoja) return String(pin) === "1234";
-  const datos = hoja.getDataRange().getValues();
-  for (let i = 1; i < datos.length; i++) {
-    if (String(datos[i][0]).trim() === "PIN") return String(datos[i][1]).trim() === String(pin).trim();
-  }
-  return String(pin).trim() === "1234";
-}
+    if (html5QrCode && lectorActivo) {
 
-/* =====================================================
-   JUGADORES
-   ===================================================== */
-function registrarJugador(datos) {
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!hoja) throw new Error("No existe la hoja Jugadores. Ejecuta setupSistema().");
-  const documento = normalizarDocumento(datos.documento);
-  if (!documento) throw new Error("El documento es obligatorio.");
-  if (encontrarFilaJugador(documento) !== -1) throw new Error("Ya existe un jugador con ese documento.");
-  const nombre = String(datos.nombre || "").trim();
-  if (!nombre) throw new Error("El nombre es obligatorio.");
+      await html5QrCode.stop();
 
-  const fechaNacimiento = datos.fechaNacimiento || "";
-  const edad = calcularEdad(fechaNacimiento);
-  const filaNueva = [
-    documento, nombre, fechaNacimiento, edad,
-    String(datos.categoria || "").trim(), String(datos.whatsapp || "").trim(),
-    String(datos.localidad || "").trim(), String(datos.estado || "ACTIVO").toUpperCase(),
-    datos.foto || "", datos.uniforme || "", datos.correo || "", new Date()
-  ];
-
-  // Compatibilidad automática con una hoja Jugadores antigua de 10 columnas.
-  const headers = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0].map(String);
-  const requeridos = ["Documento", "Nombre", "FechaNacimiento", "Edad", "Categoria", "WhatsApp", "Localidad", "Estado", "Foto", "Uniforme", "Correo", "FechaRegistro"];
-  const necesitaMigracion = requeridos.some(h => headers.indexOf(h) === -1);
-  if (necesitaMigracion) migrarEstructuraJugadores();
-
-  const h2 = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
-  const salida = new Array(h2.length).fill("");
-  requeridos.forEach((h, i) => { const c = h2.indexOf(h); if (c !== -1) salida[c] = filaNueva[i]; });
-  hoja.appendRow(salida);
-  sincronizarJugadoresCartera();
-  return { ok: true, mensaje: "Jugador creado correctamente.", documento: documento };
-}
-
-function migrarEstructuraJugadores() {
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!hoja) return;
-  const headers = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0].map(String);
-  const old = hoja.getLastRow() >= 2 ? hoja.getRange(2, 1, hoja.getLastRow() - 1, hoja.getLastColumn()).getValues() : [];
-  const idx = name => headers.indexOf(name);
-  const nuevosHeaders = ["Documento", "Nombre", "FechaNacimiento", "Edad", "Categoria", "WhatsApp", "Localidad", "Estado", "Foto", "Uniforme", "Correo", "FechaRegistro"];
-  const nuevas = old.map(r => [
-    idx("Documento") >= 0 ? r[idx("Documento")] : r[0],
-    idx("Nombre") >= 0 ? r[idx("Nombre")] : r[1],
-    idx("FechaNacimiento") >= 0 ? r[idx("FechaNacimiento")] : "",
-    idx("Edad") >= 0 ? r[idx("Edad")] : calcularEdad(idx("FechaNacimiento") >= 0 ? r[idx("FechaNacimiento")] : ""),
-    idx("Categoria") >= 0 ? r[idx("Categoria")] : r[2],
-    idx("WhatsApp") >= 0 ? r[idx("WhatsApp")] : "",
-    idx("Localidad") >= 0 ? r[idx("Localidad")] : "",
-    idx("Estado") >= 0 ? r[idx("Estado")] : r[5],
-    idx("Foto") >= 0 ? r[idx("Foto")] : r[6],
-    idx("Uniforme") >= 0 ? r[idx("Uniforme")] : r[7],
-    idx("Correo") >= 0 ? r[idx("Correo")] : r[8],
-    idx("FechaRegistro") >= 0 ? r[idx("FechaRegistro")] : r[9]
-  ]);
-  hoja.clearContents();
-  hoja.getRange(1, 1, 1, nuevosHeaders.length).setValues([nuevosHeaders]);
-  if (nuevas.length) hoja.getRange(2, 1, nuevas.length, nuevosHeaders.length).setValues(nuevas);
-  hoja.setFrozenRows(1);
-}
-
-function actualizarJugador(datos) {
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!hoja) throw new Error("No existe la hoja Jugadores.");
-  if (hoja.getLastColumn() < 12) migrarEstructuraJugadores();
-  const documento = normalizarDocumento(datos.documento);
-  const fila = encontrarFilaJugador(documento);
-  if (fila === -1) throw new Error("Jugador no encontrado.");
-  const fechaRegistro = hoja.getRange(fila, 12).getValue();
-  hoja.getRange(fila, 1, 1, 12).setValues([[
-    documento, datos.nombre || "", datos.fechaNacimiento || "", calcularEdad(datos.fechaNacimiento || ""),
-    datos.categoria || "", datos.whatsapp || "", datos.localidad || "", datos.estado || "ACTIVO",
-    datos.foto || "", datos.uniforme || "", datos.correo || "", fechaRegistro
-  ]]);
-  sincronizarJugadoresCartera();
-  const filaC = encontrarFilaCartera(documento);
-  if (filaC !== -1) obtenerHoja(HOJAS.CARTERA).getRange(filaC, 2).setValue(datos.nombre || "");
-  return { ok: true, mensaje: "Jugador actualizado correctamente." };
-}
-
-function encontrarFilaJugador(documento) {
-  documento = normalizarDocumento(documento);
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!documento || !hoja || hoja.getLastRow() < 2) return -1;
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 1).getValues();
-  for (let i = 0; i < datos.length; i++) if (normalizarDocumento(datos[i][0]) === documento) return i + 2;
-  return -1;
-}
-
-function buscarJugador(documento) {
-  documento = normalizarDocumento(documento);
-  if (!documento) return { ok: false, mensaje: "Documento vacío." };
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!hoja || hoja.getLastRow() < 2) return { ok: false, mensaje: "No hay jugadores registrados." };
-  if (hoja.getLastColumn() < 12) migrarEstructuraJugadores();
-  const h = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, hoja.getLastColumn()).getValues();
-  const c = name => h.indexOf(name);
-  for (const fila of datos) {
-    if (normalizarDocumento(fila[c("Documento")]) !== documento) continue;
-    const jugador = {
-      documento: String(fila[c("Documento")] || ""), nombre: String(fila[c("Nombre")] || ""),
-      categoria: String(fila[c("Categoria")] || ""), fechaNacimiento: formatearFecha(fila[c("FechaNacimiento")]),
-      edad: fila[c("Edad")] || calcularEdad(fila[c("FechaNacimiento")]), estado: String(fila[c("Estado")] || ""),
-      foto: String(fila[c("Foto")] || ""), uniforme: String(fila[c("Uniforme")] || ""),
-      correo: String(fila[c("Correo")] || ""), whatsapp: String(fila[c("WhatsApp")] || ""),
-      localidad: String(fila[c("Localidad")] || "")
-    };
-    return { ok: true, jugador: jugador, cartera: obtenerCartera(documento), asistencia: obtenerResumenAsistencia(documento) };
-  }
-  return { ok: false, mensaje: "Jugador no encontrado." };
-}
-
-function listarJugadores() {
-  const hoja = obtenerHoja(HOJAS.JUGADORES);
-  if (!hoja || hoja.getLastRow() < 2) return [];
-  if (hoja.getLastColumn() < 12) migrarEstructuraJugadores();
-  const h = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, hoja.getLastColumn()).getValues();
-  const c = name => h.indexOf(name);
-  return datos.map(fila => ({
-    documento: String(fila[c("Documento")] || ""), nombre: String(fila[c("Nombre")] || ""),
-    categoria: String(fila[c("Categoria")] || ""), fechaNacimiento: formatearFecha(fila[c("FechaNacimiento")]),
-    edad: fila[c("Edad")] || calcularEdad(fila[c("FechaNacimiento")]), estado: String(fila[c("Estado")] || ""),
-    foto: String(fila[c("Foto")] || ""), uniforme: String(fila[c("Uniforme")] || ""),
-    correo: String(fila[c("Correo")] || ""), whatsapp: String(fila[c("WhatsApp")] || ""), localidad: String(fila[c("Localidad")] || "")
-  })).filter(j => j.documento);
-}
-
-/* =====================================================
-   CARNET
-   ===================================================== */
-function obtenerDatosCarnet(documento) { return buscarJugador(documento); }
-function obtenerCarnetPublico(documento) { return buscarJugador(documento); }
-function obtenerURLCarnet(documento) {
-  return ScriptApp.getService().getUrl() + "?jugador=" + encodeURIComponent(normalizarDocumento(documento));
-}
-
-/* =====================================================
-   CARTERA PRINCIPAL
-   ===================================================== */
-function encontrarFilaCartera(documento) {
-  documento = normalizarDocumento(documento);
-  const hoja = obtenerHoja(HOJAS.CARTERA);
-  if (!documento || !hoja || hoja.getLastRow() < 2) return -1;
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 1).getValues();
-  for (let i = 0; i < datos.length; i++) if (normalizarDocumento(datos[i][0]) === documento) return i + 2;
-  return -1;
-}
-
-function obtenerEncabezadosCartera() {
-  const hoja = asegurarEstructuraCartera();
-  return hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0].map(String);
-}
-
-function asegurarFilaCartera(documento, nombre) {
-  documento = normalizarDocumento(documento);
-  sincronizarJugadoresCartera();
-  const hoja = asegurarEstructuraCartera();
-  let fila = encontrarFilaCartera(documento);
-  if (fila !== -1) {
-    if (nombre) hoja.getRange(fila, 2).setValue(nombre);
-    return fila;
-  }
-  const h = obtenerEncabezadosCartera();
-  const nueva = new Array(h.length).fill("");
-  nueva[0] = documento; nueva[1] = nombre || "";
-  nueva[h.indexOf("SaldoAnterior")] = 0;
-  nueva[h.indexOf("SaldoActual")] = 0;
-  nueva[h.indexOf("Actualizado")] = new Date();
-  hoja.appendRow(nueva);
-  return hoja.getLastRow();
-}
-
-function obtenerCartera(documento) {
-  documento = normalizarDocumento(documento);
-
-  const resultado = {
-    documento: documento,
-    totalCobrado: 0,
-    totalPagado: 0,
-    totalCondonado: 0,
-    saldoAnterior: 0,
-    cargos: [],
-    saldoTotal: 0,
-    deudaTotal: 0,
-    saldoFavor: 0,
-    movimientos: []
-  };
-
-  if (!documento) return resultado;
-
-  const hoja = asegurarEstructuraCartera();
-  const fila = encontrarFilaCartera(documento);
-  if (fila === -1) return resultado;
-
-  const h = obtenerEncabezadosCartera();
-  const datos = hoja.getRange(fila, 1, 1, h.length).getValues()[0];
-  const idx = name => h.indexOf(name);
-
-  resultado.nombre = String(datos[1] || '');
-  resultado.saldoAnterior = numero(datos[idx('SaldoAnterior')]);
-
-  // La trazabilidad histórica se toma de MovimientosCartera.
-  // Los cargos antiguos que todavía existan solo en la hoja Cartera
-  // se sincronizan una vez como movimientos CARGO.
-  sincronizarCargosCarteraConMovimientos(documento);
-
-  const movimientos = listarMovimientosCartera(documento);
-
-  // TOTALES: CARGO suma a cobrado; PAGO suma a pagado.
-  // APLICACION_SALDO_A_FAVOR es informativa y NO se descuenta nuevamente.
-  movimientos.forEach(m => {
-    const tipo = String(m.tipoMovimiento || '').trim().toUpperCase();
-    const valor = Math.max(0, numero(m.valor));
-
-    if (tipo === 'CARGO') {
-      resultado.totalCobrado += valor;
-    } else if (tipo === 'PAGO') {
-      resultado.totalPagado += valor;
-    } else if (tipo === 'CONDONACION') {
-      resultado.totalCondonado += valor;
     }
-  });
 
-  // Conservamos los cargos vigentes de la hoja Cartera para el detalle.
-  for (let i = 2; i < h.length; i++) {
-    const nombreCol = h[i];
-    if (['SaldoAnterior', 'SaldoActual', 'Actualizado'].indexOf(nombreCol) !== -1) continue;
+  } catch(error) {
 
-    const valor = numero(datos[i]);
-    if (!valor) continue;
+    console.error(
+      "ERROR DETENIENDO LECTOR:",
+      error
+    );
 
-    if (
-      nombreCol === 'Inscripcion' ||
-      nombreCol === 'Uniforme' ||
-      nombreCol === 'Poliza' ||
-      nombreCol === 'Otros' ||
-      /^Entrenos_/.test(nombreCol) ||
-      /^Partidos_/.test(nombreCol)
-    ) {
-      resultado.cargos.push({ campo: nombreCol, valor: valor });
-    }
   }
 
-  // Saldo final: saldo anterior + cargos - pagos - condonaciones.
-  // APLICACION_SALDO_A_FAVOR no modifica el saldo porque el pago que
-  // generó ese saldo a favor ya fue contabilizado en totalPagado.
-  resultado.saldoTotal =
-    resultado.saldoAnterior +
-    resultado.totalCobrado -
-    resultado.totalPagado -
-    resultado.totalCondonado;
 
-  resultado.deudaTotal = Math.max(0, resultado.saldoTotal);
-  resultado.saldoFavor = Math.max(0, -resultado.saldoTotal);
+  lectorActivo = false;
 
-  // Recalcula y guarda el saldo histórico de cada movimiento en orden cronológico.
-  resultado.movimientos = calcularYGuardarSaldosHistoricosCartera(
-    documento,
-    resultado.saldoAnterior,
-    movimientos
+  carnetBloqueado = false;
+
+
+  document.getElementById("btnIniciar").disabled =
+    false;
+
+  document.getElementById("btnDetener").disabled =
+    true;
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🔴 LECTOR DETENIDO";
+
+
+  mostrarResultado(
+    "",
+    "oculto"
   );
 
-  if (idx('SaldoActual') >= 0) {
-    hoja.getRange(fila, idx('SaldoActual') + 1).setValue(resultado.saldoTotal);
-  }
 
-  if (idx('Actualizado') >= 0) {
-    hoja.getRange(fila, idx('Actualizado') + 1).setValue(new Date());
-  }
+  console.log(
+    "LECTOR DETENIDO MANUALMENTE"
+  );
 
-  return resultado;
 }
 
-function obtenerClaveCargoCartera(tipo, periodo) {
-  const t = String(tipo || "").trim().toUpperCase();
-  const p = normalizarPeriodo(periodo || "");
-  if (t === "INSCRIPCION") return "INSCRIPCION|";
-  if (t === "UNIFORME") return "UNIFORME|";
-  if (t === "POLIZA" || t === "PÓLIZA") return "POLIZA|";
-  if (t === "OTROS") return "OTROS|";
-  if (t.indexOf("ENTREN") !== -1) return "ENTRENOS|" + p;
-  if (t.indexOf("PARTIDO") !== -1) return "PARTIDOS|" + p;
-  return t + "|" + p;
-}
 
-function obtenerClaveCargoDesdeCampoCartera(campo) {
-  const c = String(campo || "").trim();
-  if (c === "Inscripcion") return "INSCRIPCION|";
-  if (c === "Uniforme") return "UNIFORME|";
-  if (c === "Poliza") return "POLIZA|";
-  if (c === "Otros") return "OTROS|";
-  let m = c.match(/^Entrenos_(\d{4})_(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)$/);
-  if (m) return "ENTRENOS|" + normalizarPeriodo(m[1] + "-" + ({Ene:1,Feb:2,Mar:3,Abr:4,May:5,Jun:6,Jul:7,Ago:8,Sep:9,Oct:10,Nov:11,Dic:12}[m[2]]));
-  m = c.match(/^Partidos_(\d{4})_(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)$/);
-  if (m) return "PARTIDOS|" + normalizarPeriodo(m[1] + "-" + ({Ene:1,Feb:2,Mar:3,Abr:4,May:5,Jun:6,Jul:7,Ago:8,Sep:9,Oct:10,Nov:11,Dic:12}[m[2]]));
-  return "";
-}
+/* =========================================================
+   PROCESAR QR
+========================================================= */
 
-function sincronizarCargosCarteraConMovimientos(documento) {
-  documento = normalizarDocumento(documento);
-  if (!documento) return;
-  const hoja = asegurarEstructuraCartera();
-  const fila = encontrarFilaCartera(documento);
-  const hojaMov = asegurarEstructuraMovimientosCartera();
-  if (fila === -1 || !hojaMov) return;
+function procesarQR(decodedText) {
 
-  const h = obtenerEncabezadosCartera();
-  const datos = hoja.getRange(fila, 1, 1, h.length).getValues()[0];
-  const movDatos = hojaMov.getLastRow() >= 2 ? hojaMov.getRange(2, 1, hojaMov.getLastRow() - 1, 12).getValues() : [];
+  /*
+   * SI ESTAMOS PROCESANDO OTRO CARNET,
+   * IGNORAMOS CUALQUIER NUEVA LECTURA.
+   */
+  if (carnetBloqueado) {
 
-  const existentes = {};
-  movDatos.forEach(r => {
-    if (normalizarDocumento(r[1]) !== documento || String(r[3] || "").toUpperCase() !== "CARGO") return;
-    const clave = obtenerClaveCargoCartera(r[10], r[9]);
-    const valor = numero(r[4]);
-    if (!clave || valor <= 0) return;
-    if (!existentes[clave]) existentes[clave] = [];
-    existentes[clave].push(valor);
-  });
+    console.log(
+      "QR IGNORADO: PROCESANDO CARNET ANTERIOR"
+    );
 
-  const cargosFaltantes = [];
-  for (let i = 2; i < h.length; i++) {
-    const campo = String(h[i] || "");
-    if (["SaldoAnterior", "SaldoActual", "Actualizado"].indexOf(campo) !== -1) continue;
-    const valor = numero(datos[i]);
-    if (valor <= 0) continue;
-    const clave = obtenerClaveCargoDesdeCampoCartera(campo);
-    if (!clave) continue;
-    const arr = existentes[clave] || [];
-    const encontrado = arr.some(v => Math.abs(v - valor) < 0.0001);
-    if (!encontrado) cargosFaltantes.push({ campo: campo, valor: valor, clave: clave });
-  }
-  if (!cargosFaltantes.length) return;
+    return;
 
-  // Los cargos antiguos que faltaban en el libro se ubican antes del primer
-  // movimiento existente. No conocemos su hora exacta, pero la regla operativa
-  // es que primero se generan los cobros y luego comienzan los pagos.
-  let primeraFecha = new Date();
-  const fechas = movDatos.filter(r => normalizarDocumento(r[1]) === documento && r[0]).map(r => new Date(r[0]).getTime()).filter(n => !isNaN(n));
-  if (fechas.length) primeraFecha = new Date(Math.min.apply(null, fechas));
-
-  const base = primeraFecha.getTime();
-  cargosFaltantes.forEach((c, pos) => {
-    const fecha = new Date(base - (cargosFaltantes.length - pos) * 1000);
-    let periodo = "";
-    let concepto = "";
-    if (c.campo === "Uniforme") { concepto = "uniforme"; }
-    else if (c.campo === "Inscripcion") { concepto = "inscripcion"; }
-    else if (c.campo === "Poliza") { concepto = "poliza"; }
-    else if (c.campo === "Otros") { concepto = "otros"; }
-    else {
-      const m = c.campo.match(/^(Entrenos|Partidos)_(\d{4})_(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)$/);
-      if (m) {
-        const meses = {Ene:"enero",Feb:"febrero",Mar:"marzo",Abr:"abril",May:"mayo",Jun:"junio",Jul:"julio",Ago:"agosto",Sep:"septiembre",Oct:"octubre",Nov:"noviembre",Dic:"diciembre"};
-        periodo = meses[m[3]] + " " + m[2];
-        concepto = m[1] === "Entrenos" ? "mensualidad entrenos" : "mensualidad partidos";
-      }
-    }
-    hojaMov.appendRow([
-      fecha, documento, String(datos[1] || ""), "CARGO", c.valor, "", "", "Cargo sincronizado desde Cartera", "Sistema", periodo, concepto, ""
-    ]);
-  });
-}
-
-function calcularYGuardarSaldosHistoricosCartera(documento, saldoAnterior, movimientos) {
-  const hoja = asegurarEstructuraMovimientosCartera();
-  if (!hoja || !movimientos || !movimientos.length) return movimientos || [];
-
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 12).getValues();
-  const d = normalizarDocumento(documento);
-  const filas = [];
-  for (let i = 0; i < datos.length; i++) {
-    if (normalizarDocumento(datos[i][1]) === d) filas.push({ indice: i, fecha: new Date(datos[i][0]).getTime() || 0 });
-  }
-  filas.sort((a, b) => a.fecha - b.fecha || a.indice - b.indice);
-
-  let saldo = numero(saldoAnterior);
-  const saldos = {};
-  filas.forEach(f => {
-    const r = datos[f.indice];
-    const tipo = String(r[3] || "").trim().toUpperCase();
-    const valor = Math.max(0, numero(r[4]));
-    if (tipo === "CARGO") saldo += valor;
-    else if (tipo === "PAGO" || tipo === "CONDONACION") saldo -= valor;
-    saldos[f.indice] = saldo;
-  });
-
-  filas.forEach(f => {
-    const filaHoja = f.indice + 2;
-    const actual = datos[f.indice][11];
-    if (actual === "" || actual === null || actual === undefined || Number(actual) !== saldos[f.indice]) {
-      hoja.getRange(filaHoja, 12).setValue(saldos[f.indice]);
-    }
-  });
-  return listarMovimientosCartera(documento);
-}
-
-function listarMovimientosCartera(documento) {
-  const hoja = asegurarEstructuraMovimientosCartera();
-  if (!hoja || hoja.getLastRow() < 2) return [];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 12).getValues();
-  const d = normalizarDocumento(documento);
-  return datos.filter(r => normalizarDocumento(r[1]) === d).map(r => ({
-    fecha: formatearFecha(r[0]), documento: String(r[1] || ""), nombre: String(r[2] || ""),
-    tipoMovimiento: String(r[3] || "").toUpperCase(), valor: numero(r[4]), medio: String(r[5] || ""),
-    referencia: String(r[6] || ""), observacion: String(r[7] || ""), usuario: String(r[8] || ""),
-    periodo: normalizarPeriodo(r[9]), concepto: String(r[10] || ""), saldoDespues: numero(r[11])
-  }));
-}
-
-function registrarMovimientoCartera(datos) {
-  const documento = normalizarDocumento(datos.documento);
-  if (!documento) throw new Error("El documento es obligatorio.");
-  const jugador = buscarJugador(documento);
-  if (!jugador.ok) throw new Error("El jugador no existe.");
-  const valor = numero(datos.valor);
-  if (valor <= 0) throw new Error("El valor debe ser mayor que cero.");
-  const tipo = String(datos.tipoMovimiento || "").trim().toUpperCase();
-  if (["PAGO", "CONDONACION", "AJUSTE"].indexOf(tipo) === -1) throw new Error("Tipo de movimiento no válido.");
-  const hoja = asegurarEstructuraMovimientosCartera();
-  if (!hoja) throw new Error("No existe la hoja MovimientosCartera. Ejecuta setupSistema().");
-
-  // Guardamos el movimiento primero y luego calculamos el saldo real que
-  // queda inmediatamente después de esta transacción. Ese saldo queda
-  // congelado en la fila histórica y no cambia cuando existan movimientos futuros.
-  hoja.appendRow([
-    obtenerFechaPago(datos.fecha), documento, jugador.jugador.nombre, tipo, valor,
-    String(datos.medio || ""), String(datos.referencia || ""), String(datos.observacion || ""),
-    String(datos.usuario || "Sistema"), normalizarPeriodo(datos.periodo || ""), String(datos.concepto || ""), ""
-  ]);
-  const filaMovimiento = hoja.getLastRow();
-  const cartera = obtenerCartera(documento);
-  const encabezados = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0].map(String);
-  const colSaldoDespues = encabezados.indexOf("SaldoDespues") + 1;
-  if (colSaldoDespues > 0) hoja.getRange(filaMovimiento, colSaldoDespues).setValue(cartera.saldoTotal);
-  return { ok: true, movimiento: tipo, valor: valor, saldo: cartera.saldoTotal, saldoDespues: cartera.saldoTotal, deudaTotal: cartera.deudaTotal, saldoFavor: cartera.saldoFavor, cartera: cartera };
-}
-
-/* =====================================================
-   PAGO RÁPIDO — NUEVA REGLA
-   El entrenador registra solamente jugador + valor + medio.
-   ===================================================== */
-function registrarPago(datos) {
-  const documento = normalizarDocumento(datos.documento);
-  const valorCobrado = numero(datos.valorCobrado);
-  const valorPagado = numero(datos.valorPagado !== undefined ? datos.valorPagado : datos.valor);
-  const medio = String(datos.medio || "").trim().toUpperCase();
-
-  if (!documento) throw new Error("El documento es obligatorio.");
-  if (valorCobrado < 0 || valorPagado < 0) throw new Error("Los valores no pueden ser negativos.");
-  if (valorCobrado === 0 && valorPagado === 0) throw new Error("Debes ingresar un valor cobrado o un valor pagado.");
-
-  if (valorCobrado > 0) {
-    if (!datos.periodo) throw new Error("Debes ingresar el periodo del cobro.");
-    if (!datos.concepto) throw new Error("Debes indicar el concepto del cobro.");
   }
 
-  if (valorPagado > 0) {
-    if (!medio) throw new Error("Debes seleccionar el medio de pago.");
-    if (["EFECTIVO", "NEQUI", "DAVIPLATA", "TRANSFERENCIA", "OTRO"].indexOf(medio) === -1) {
-      throw new Error("Medio de pago no válido.");
-    }
+
+  /*
+   * SI EL LECTOR NO ESTÁ ACTIVO,
+   * NO PROCESAMOS.
+   */
+  if (!lectorActivo) {
+
+    return;
+
   }
 
-  const resultados = [];
-  let cartera = null;
 
-  // Registrar el cobro solamente cuando Cobrado sea mayor que cero.
-  if (valorCobrado > 0) {
-    const cobro = registrarCobroCartera({
-      documento: documento,
-      valor: valorCobrado,
-      tipo: datos.concepto,
-      periodo: datos.periodo,
-      fecha: datos.fechaPago || datos.fecha || new Date()
-    });
-    resultados.push(cobro);
-    cartera = cobro.cartera;
+  const documento =
+    String(decodedText || "").trim();
+
+
+  if (!documento) {
+
+    return;
+
   }
 
-  // Registrar el pago solamente cuando Pagado sea mayor que cero.
-  if (valorPagado > 0) {
-    const pago = registrarMovimientoCartera({
-      documento: documento,
-      valor: valorPagado,
-      tipoMovimiento: "PAGO",
-      medio: medio,
-      referencia: datos.referencia || "",
-      observacion: datos.observacion || "",
-      usuario: datos.usuario || "Sistema",
-      fecha: datos.fechaPago || datos.fecha || new Date(),
-      periodo: datos.periodo || "",
-      concepto: datos.concepto || ""
-    });
-    resultados.push(pago);
-    cartera = pago.cartera;
-  }
 
-  if (!cartera) cartera = obtenerCartera(documento);
+  /*
+   * BLOQUEAMOS INMEDIATAMENTE.
+   *
+   * MUY IMPORTANTE:
+   * NO DETENEMOS LA CÁMARA.
+   *
+   * La cámara seguirá encendida,
+   * pero ignoraremos nuevos QR
+   * mientras esperamos la respuesta.
+   */
+  carnetBloqueado = true;
 
-  let mensaje;
-  if (valorCobrado > 0 && valorPagado > 0) {
-    mensaje = "Cobro y pago registrados correctamente.";
-  } else if (valorCobrado > 0) {
-    mensaje = "Cobro registrado correctamente.";
-  } else if (cartera.saldoFavor > 0) {
-    mensaje = "Pago registrado. El jugador tiene saldo a favor.";
-  } else if (cartera.deudaTotal > 0) {
-    mensaje = "Pago registrado. El jugador tiene saldo pendiente.";
-  } else {
-    mensaje = "Pago registrado correctamente.";
-  }
 
-  return {
-    ok: true,
-    mensaje: mensaje,
-    documento: documento,
-    valorCobrado: valorCobrado,
-    valorPagado: valorPagado,
-    pagoReal: valorPagado,
-    saldoAplicado: valorPagado,
-    saldoNeto: cartera.saldoTotal,
-    saldo: cartera.saldoTotal,
-    deudaTotal: cartera.deudaTotal,
-    saldoFavor: cartera.saldoFavor,
-    cartera: cartera,
-    resultados: resultados
-  };
-}
+  console.log(
+    "================================"
+  );
 
-function registrarCondonacion(datos) {
-  return registrarMovimientoCartera({
-    documento: datos.documento, valor: datos.valor, tipoMovimiento: "CONDONACION",
-    medio: "", referencia: datos.referencia || "", observacion: datos.observacion || "",
-    usuario: datos.usuario || "Sistema", fecha: datos.fecha || new Date(), periodo: datos.periodo || "", concepto: datos.concepto || "CONDONACION"
-  });
-}
+  console.log(
+    "QR DETECTADO:",
+    documento
+  );
 
-/* =====================================================
-   COBROS Y AJUSTES DE CARTERA
-   ===================================================== */
-function campoCarteraParaCobro(tipo, periodo, fecha) {
-  const tOriginal = String(tipo || "").trim();
-  const t = tOriginal.toUpperCase();
+  console.log(
+    "LECTOR CONTINUO: CARNET BLOQUEADO TEMPORALMENTE"
+  );
 
-  // Conceptos que llegan directamente desde el formulario.
-  if (t === "MENSUALIDAD ENTRENOS" || t === "MENSUALIDAD ENTRENAMIENTO" || t === "ENTRENOS" || t === "ENTRENAMIENTO" || t === "ENTRENAMIENTOS") {
-    tipo = "ENTRENOS";
-  } else if (t === "MENSUALIDAD PARTIDOS" || t === "PARTIDOS" || t === "PARTIDO") {
-    tipo = "PARTIDOS";
-  }
+  console.log(
+    "================================"
+  );
 
-  const tipoNormalizado = String(tipo || "").trim().toUpperCase();
-  if (["INSCRIPCION", "UNIFORME", "POLIZA", "OTROS"].indexOf(tipoNormalizado) !== -1) {
-    return tipoNormalizado.charAt(0) + tipoNormalizado.slice(1).toLowerCase().replace("poliza", "Poliza");
-  }
-  const p = String(periodo || "").trim();
-  let mes = null, anio = null;
-  let m = p.match(/^(\d{4})-(\d{1,2})/);
-  if (m) { anio = Number(m[1]); mes = Number(m[2]); }
-  else {
-    const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-    m = p.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)\s+(\d{4})$/);
-    if (m) { mes = meses.indexOf(m[1].toLowerCase()) + 1; anio = Number(m[2]); }
-  }
-  if (!mes) { const d = fecha ? obtenerFechaPago(fecha) : new Date(); mes = d.getMonth() + 1; anio = d.getFullYear(); }
-  const mesesC = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-  const base = tipoNormalizado === "ENTRENOS" || tipoNormalizado === "ENTRENAMIENTO" || tipoNormalizado === "ENTRENAMIENTOS" ? "Entrenos" : "Partidos";
-  return base + "_" + anio + "_" + mesesC[mes - 1];
-}
 
-function listarCargosCartera(documento) {
-  documento = normalizarDocumento(documento);
-  if (!documento) return [];
+  mostrarResultado(
 
-  const hoja = asegurarEstructuraCartera();
-  const fila = encontrarFilaCartera(documento);
-  if (fila === -1) return [];
+    "🔎" +
 
-  const h = obtenerEncabezadosCartera();
-  const datos = hoja.getRange(fila, 1, 1, h.length).getValues()[0];
-  const cargos = [];
-  const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    "<div class='jugador'>" +
+    "QR DETECTADO" +
+    "</div>" +
 
-  for (let i = 0; i < h.length; i++) {
-    const campo = String(h[i] || "");
-    const valor = numero(datos[i]);
-    if (!valor) continue;
+    "<strong>Documento:</strong> " +
+    escaparHTML(documento) +
 
-    let concepto = campo;
-    let periodo = "";
-    let tipo = "";
-    let m = campo.match(/^(Entrenos|Partidos)_(\d{4})_(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic)$/);
+    "<br><br>" +
 
-    if (m) {
-      tipo = m[1] === "Entrenos" ? "Mensualidad entrenos" : "Mensualidad partidos";
-      const mapaMes = {Ene:1,Feb:2,Mar:3,Abr:4,May:5,Jun:6,Jul:7,Ago:8,Sep:9,Oct:10,Nov:11,Dic:12};
-      periodo = meses[mapaMes[m[3]] - 1] + " " + m[2];
-      concepto = tipo + " — " + periodo;
-    } else if (campo === "Inscripcion") {
-      concepto = "Inscripción";
-    } else if (campo === "Uniforme") {
-      concepto = "Uniforme";
-    } else if (campo === "Poliza") {
-      concepto = "Póliza";
-    } else if (campo === "Otros") {
-      concepto = "Otros";
-    } else if (campo !== "SaldoAnterior" && campo !== "SaldoActual" && campo !== "Actualizado" && campo !== "Documento" && campo !== "Nombre") {
-      continue;
-    }
+    "⏳ Procesando registro...",
 
-    if (campo !== "SaldoAnterior" && campo !== "SaldoActual" && campo !== "Actualizado" && campo !== "Documento" && campo !== "Nombre") {
-      cargos.push({ campo: campo, concepto: concepto, periodo: periodo, tipo: tipo, valor: valor });
-    }
-  }
+    "diagnostico"
 
-  return cargos;
-}
+  );
 
-function registrarCobroCartera(datos) {
-  const documento = normalizarDocumento(datos.documento);
-  const valor = numero(datos.valor);
-  if (!documento) throw new Error("El documento es obligatorio.");
-  if (valor <= 0) throw new Error("El valor del cobro debe ser mayor que cero.");
-  const jugador = buscarJugador(documento);
-  if (!jugador.ok) throw new Error("El jugador no existe.");
-  const hoja = asegurarEstructuraCartera();
-  const fila = asegurarFilaCartera(documento, jugador.jugador.nombre);
-  const h = obtenerEncabezadosCartera();
-  const campo = campoCarteraParaCobro(datos.tipo, datos.periodo, datos.fecha);
-  let col = h.indexOf(campo) + 1;
-  if (col === 0) throw new Error("El período/año de este cobro no está habilitado en la hoja Cartera. Ejecuta prepararAnioCartera(" + (new Date().getFullYear()) + ").");
-  // Guardamos el cobro en la columna correspondiente de Cartera.
-  // La columna representa el saldo/cargo vigente para ese concepto y período.
-  hoja.getRange(fila, col).setValue(valor);
 
-  // Además dejamos trazabilidad del cobro en MovimientosCartera.
-  // Esto permite ver el historial completo: CARGO, PAGO y CONDONACION.
-  const hojaMov = asegurarEstructuraMovimientosCartera();
-  if (!hojaMov) throw new Error("No existe la hoja MovimientosCartera. Ejecuta setupSistema().");
-  hojaMov.appendRow([
-    obtenerFechaPago(datos.fecha || new Date()),
+  document.getElementById("estadoLector").innerHTML =
+    "🟡 PROCESANDO CARNET...";
+
+
+  const tipo =
+    document.getElementById("tipo").value;
+
+
+  const actividad =
+    document.getElementById("actividad").value.trim()
+    || "Entrenamiento";
+
+
+  /*
+   * ENVIAMOS EL REGISTRO.
+   */
+  enviarRegistro(
     documento,
-    jugador.jugador.nombre,
-    "CARGO",
-    valor,
-    "",
-    String(datos.referencia || ""),
-    String(datos.observacion || ""),
-    String(datos.usuario || "Sistema"),
-    normalizarPeriodo(datos.periodo || ""),
-    String(datos.tipo || datos.concepto || ""),
-    ""
-  ]);
+    tipo,
+    actividad
+  );
 
-  const filaMovimiento = hojaMov.getLastRow();
-  const cartera = obtenerCartera(documento);
-  const encabezadosMov = hojaMov.getRange(1, 1, 1, hojaMov.getLastColumn()).getValues()[0].map(String);
-  const colSaldoDespues = encabezadosMov.indexOf("SaldoDespues") + 1;
-  if (colSaldoDespues > 0) hojaMov.getRange(filaMovimiento, colSaldoDespues).setValue(cartera.saldoTotal);
-  return { ok: true, mensaje: "Cobro y movimiento CARGO registrados correctamente.", documento: documento, campo: campo, valor: valor, saldo: cartera.saldoTotal, saldoDespues: cartera.saldoTotal, cartera: cartera };
 }
 
-function ajustarCobroCartera(datos) {
-  return registrarCobroCartera(datos);
-}
 
-function prepararAnioCartera(anio) {
-  anio = Number(anio || anioActual());
-  if (!anio || anio < 2000) throw new Error("Año no válido.");
-  const hoja = asegurarEstructuraCartera();
-  const h = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0].map(String);
-  const nuevos = encabezadosCartera(anio).filter(x => /^Entrenos_/.test(x) || /^Partidos_/.test(x));
-  const agregables = nuevos.filter(x => h.indexOf(x) === -1);
-  if (agregables.length) hoja.getRange(1, hoja.getLastColumn() + 1, 1, agregables.length).setValues([agregables]);
-  sincronizarJugadoresCartera();
-  return { ok: true, anio: anio, columnasAgregadas: agregables.length };
-}
+/* =========================================================
+   ENVIAR REGISTRO Y RECIBIR RESPUESTA
+========================================================= */
 
-function cerrarAnioCartera(anio) {
-  anio = Number(anio || anioActual());
-  const hoja = asegurarEstructuraCartera();
-  const jugadores = listarJugadores();
-  const fecha = new Date();
-  const datos = hoja.getDataRange().getValues();
-  const h = datos[0].map(String);
-  const idxDoc = h.indexOf("Documento"), idxSaldo = h.indexOf("SaldoActual"), idxPrev = h.indexOf("SaldoAnterior");
-  const saldos = {};
-  for (let i = 1; i < datos.length; i++) {
-    const d = normalizarDocumento(datos[i][idxDoc]);
-    if (d) saldos[d] = numero(datos[i][idxSaldo]);
-  }
-  // El saldo final queda preservado en MovimientosCartera y se convierte en saldo anterior.
-  jugadores.forEach(j => {
-    const fila = encontrarFilaCartera(j.documento);
-    if (fila === -1) return;
-    const saldo = numero(saldos[j.documento] || obtenerCartera(j.documento).saldoTotal);
-    hoja.getRange(fila, idxPrev + 1).setValue(saldo);
-    for (let c = 0; c < h.length; c++) {
-      if (/^(Inscripcion|Uniforme|Poliza|Otros|Entrenos_|Partidos_)/.test(h[c])) hoja.getRange(fila, c + 1).setValue(0);
+function enviarRegistro(
+  documento,
+  tipo,
+  actividad
+) {
+
+  console.log(
+    "ENVIANDO AL SISTEMA BÚFALOS FC:",
+    documento
+  );
+
+
+  mostrarResultado(
+
+    "📤" +
+
+    "<div class='jugador'>" +
+    "PROCESANDO REGISTRO" +
+    "</div>" +
+
+    "Esperando confirmación del sistema...",
+
+    "diagnostico"
+
+  );
+
+
+  contadorJSONP++;
+
+
+  const callback =
+    "bufalosRespuesta_" +
+    Date.now() +
+    "_" +
+    contadorJSONP;
+
+
+  let terminado = false;
+
+
+  /*
+   * Creamos la función callback global.
+   */
+  window[callback] = function(respuesta) {
+
+    if (terminado) {
+
+      return;
+
     }
-    hoja.getRange(fila, idxSaldo + 1).setValue(saldo);
-    hoja.getRange(fila, h.indexOf("Actualizado") + 1).setValue(fecha);
-    const mh = obtenerHoja(HOJAS.MOVIMIENTOS);
-    mh.appendRow([fecha, j.documento, j.nombre, "SALDO_ANTERIOR", saldo, "", "", "Cierre de año " + anio, "Sistema", "", "", saldo]);
-  });
-  return { ok: true, mensaje: "Cierre de cartera realizado. Los saldos quedan como saldo anterior para el nuevo año.", anio: anio };
-}
 
-/* =====================================================
-   COMPATIBILIDAD: LISTAR PAGOS ANTIGUOS
-   ===================================================== */
-function listarPagos() {
-  const movimientos = listarTodosMovimientosCartera();
-  // Al consultar el listado general, aseguramos que los movimientos antiguos
-  // también tengan su saldo histórico guardado.
-  const documentos = {};
-  movimientos.forEach(m => { if (m.documento) documentos[m.documento] = true; });
-  Object.keys(documentos).forEach(d => obtenerCartera(d));
-  const movimientosActualizados = listarTodosMovimientosCartera();
-  return movimientosActualizados.filter(m => ["CARGO", "PAGO", "CONDONACION"].indexOf(m.tipoMovimiento) !== -1).map(m => ({
-    fecha: m.fecha, documento: m.documento, nombre: m.nombre, periodo: m.periodo,
-    concepto: m.concepto || (m.tipoMovimiento === "CARGO" ? "COBRO" : m.tipoMovimiento),
-    valorCobrado: m.tipoMovimiento === "CARGO" ? m.valor : 0,
-    valorPagado: m.tipoMovimiento === "PAGO" ? m.valor : 0,
-    saldo: m.saldoDespues, medio: m.medio, referencia: m.referencia,
-    estado: m.tipoMovimiento === "CARGO" ? "COBRADO" : (m.tipoMovimiento === "CONDONACION" ? "CONDONACION" : "PAGADO"),
-    observacion: m.observacion
-  }));
-}
 
-function listarTodosMovimientosCartera() {
-  const hoja = asegurarEstructuraMovimientosCartera();
-  if (!hoja || hoja.getLastRow() < 2) return [];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 12).getValues();
-  return datos.map(r => ({
-    fecha: formatearFecha(r[0]), documento: normalizarDocumento(r[1]), nombre: String(r[2] || ""),
-    tipoMovimiento: String(r[3] || "").toUpperCase(), valor: numero(r[4]), medio: String(r[5] || ""),
-    referencia: String(r[6] || ""), observacion: String(r[7] || ""), usuario: String(r[8] || ""),
-    periodo: normalizarPeriodo(r[9]), concepto: String(r[10] || ""), saldoDespues: numero(r[11])
-  }));
-}
+    terminado = true;
 
-/* =====================================================
-   ASISTENCIA
-   ===================================================== */
-function registrarAsistencia(datos) {
-  const documento = normalizarDocumento(datos.documento);
-  if (!documento) return { ok: false, estado: "ERROR", mensaje: "Documento vacío." };
-  const jugador = buscarJugador(documento);
-  if (!jugador.ok) return { ok: false, estado: "NO_ENCONTRADO", mensaje: "Jugador no encontrado." };
-  const actividad = String(datos.actividad || "Actividad").trim();
-  const tipo = String(datos.tipo || "ASISTENCIA").trim().toUpperCase();
-  const fecha = fechaHoy();
-  if (asistenciaYaRegistrada(documento, fecha, actividad, tipo)) return {
-    ok: false, duplicado: true, estado: "DUPLICADO", documento: documento,
-    nombre: jugador.jugador.nombre, categoria: jugador.jugador.categoria, fecha: fecha, actividad: actividad, tipo: tipo,
-    mensaje: jugador.jugador.nombre + " ya tiene registrada esta " + tipo.toLowerCase() + " para esta actividad."
+
+    console.log(
+      "RESPUESTA RECIBIDA:",
+      respuesta
+    );
+
+
+    try {
+
+      if (!respuesta) {
+
+        mostrarErrorRespuesta();
+
+        return;
+
+      }
+
+
+      procesarRespuestaServidor(
+        respuesta,
+        documento,
+        tipo
+      );
+
+    } finally {
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    }
+
   };
-  const hoja = obtenerHoja(HOJAS.ASISTENCIA);
-  if (!hoja) return { ok: false, estado: "ERROR", mensaje: "No existe la hoja Asistencia." };
-  hoja.appendRow([fecha, horaActual(), documento, jugador.jugador.nombre, jugador.jugador.categoria, actividad, tipo, datos.registradoPor || "Sistema"]);
-  return { ok: true, estado: "REGISTRADO", duplicado: false, mensaje: tipo === "PREASISTENCIA" ? "Preasistencia registrada correctamente." : "Asistencia registrada correctamente.", jugador: jugador.jugador, tipo: tipo, actividad: actividad, fecha: fecha };
+
+
+  /*
+   * Creamos el script JSONP.
+   */
+  const script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+
+    "?accion=registrarAsistenciaQR" +
+
+    "&documento=" +
+    encodeURIComponent(documento) +
+
+    "&tipo=" +
+    encodeURIComponent(tipo) +
+
+    "&actividad=" +
+    encodeURIComponent(actividad) +
+
+    "&registradoPor=" +
+    encodeURIComponent("Hub QR") +
+
+    "&callback=" +
+    encodeURIComponent(callback) +
+
+    "&_=" +
+    Date.now();
+
+
+  /*
+   * Error de conexión.
+   *
+   * En este caso NO desbloqueamos automáticamente,
+   * porque no sabemos si el registro llegó al servidor.
+   */
+  script.onerror = function() {
+
+    if (terminado) {
+
+      return;
+
+    }
+
+
+    terminado = true;
+
+
+    console.error(
+      "ERROR RECIBIENDO RESPUESTA DEL SERVIDOR"
+    );
+
+
+    mostrarResultado(
+
+      "❌" +
+
+      "<div class='jugador'>" +
+      "NO SE RECIBIÓ CONFIRMACIÓN" +
+      "</div>" +
+
+      "El registro pudo haberse enviado," +
+
+      "<br>" +
+
+      "pero el navegador no recibió la respuesta del sistema.",
+
+      "error"
+
+    );
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🔴 LECTOR DETENIDO — REVISE EL REGISTRO";
+
+
+    /*
+     * Detenemos el lector por seguridad.
+     */
+    detenerLector();
+
+
+    limpiarJSONP(
+      callback,
+      script
+    );
+
+  };
+
+
+  /*
+   * Timeout de seguridad.
+   */
+  const temporizador =
+    setTimeout(function() {
+
+      if (terminado) {
+
+        return;
+
+      }
+
+
+      terminado = true;
+
+
+      console.error(
+        "TIEMPO DE ESPERA AGOTADO"
+      );
+
+
+      mostrarResultado(
+
+        "⚠️" +
+
+        "<div class='jugador'>" +
+        "SIN CONFIRMACIÓN" +
+        "</div>" +
+
+        "El sistema tardó demasiado en responder." +
+
+        "<br><br>" +
+
+        "Por seguridad, el lector fue detenido." +
+
+        "<br>" +
+
+        "Revise la hoja Asistencia antes de continuar.",
+
+        "error"
+
+      );
+
+
+      detenerLector();
+
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    }, 15000);
+
+
+  /*
+   * Guardamos el timeout.
+   */
+  script._bufalosTimeout =
+    temporizador;
+
+
+  document.body.appendChild(script);
+
 }
 
-function asistenciaYaRegistrada(documento, fecha, actividad, tipo) {
-  const hoja = obtenerHoja(HOJAS.ASISTENCIA);
-  if (!hoja || hoja.getLastRow() < 2) return false;
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 8).getValues();
-  return datos.some(fila => normalizarDocumento(fila[2]) === documento && formatearFecha(fila[0]) === fecha && String(fila[5] || "").trim() === actividad && String(fila[6] || "").trim().toUpperCase() === tipo);
-}
 
-function obtenerResumenAsistencia(documento) {
-  const hoja = obtenerHoja(HOJAS.ASISTENCIA);
-  const resultado = { preasistencias: 0, asistencias: 0, movimientos: [] };
-  if (!hoja || hoja.getLastRow() < 2) return resultado;
-  const d = normalizarDocumento(documento);
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 8).getValues();
-  datos.forEach(fila => {
-    if (normalizarDocumento(fila[2]) !== d) return;
-    const tipo = String(fila[6] || "").trim().toUpperCase();
-    if (tipo === "PREASISTENCIA") resultado.preasistencias++;
-    if (tipo === "ASISTENCIA") resultado.asistencias++;
-    resultado.movimientos.push({ fecha: formatearFecha(fila[0]), hora: String(fila[1] || ""), actividad: String(fila[5] || ""), tipo: tipo, registradoPor: String(fila[7] || "") });
-  });
-  return resultado;
-}
+/* =========================================================
+   PROCESAR RESPUESTA DEL SERVIDOR
+========================================================= */
 
-function listarAsistencias() {
-  const hoja = obtenerHoja(HOJAS.ASISTENCIA);
-  if (!hoja || hoja.getLastRow() < 2) return [];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 8).getValues();
-  return datos.map(fila => ({ fecha: formatearFecha(fila[0]), hora: String(fila[1] || ""), documento: String(fila[2] || ""), nombre: String(fila[3] || ""), categoria: String(fila[4] || ""), actividad: String(fila[5] || ""), tipo: String(fila[6] || ""), registradoPor: String(fila[7] || "") }));
-}
+function procesarRespuestaServidor(
+  respuesta,
+  documento,
+  tipo
+) {
 
-/* =====================================================
-   ACTIVIDADES
-   ===================================================== */
-function registrarActividad(datos) {
-  const hoja = obtenerHoja(HOJAS.ENTRENAMIENTOS);
-  if (!hoja) throw new Error("No existe la hoja Entrenamientos.");
-  const actividad = String(datos.actividad || "").trim();
-  if (!actividad) throw new Error("La actividad es obligatoria.");
-  hoja.appendRow([datos.fecha || fechaHoy(), datos.hora || horaActual(), actividad, datos.tipo || "ENTRENAMIENTO", datos.estado || "PROGRAMADO"]);
-  return { ok: true, mensaje: "Actividad creada correctamente." };
-}
+  const estado =
+    String(
+      respuesta.estado || ""
+    ).toUpperCase();
 
-function listarActividades() {
-  const hoja = obtenerHoja(HOJAS.ENTRENAMIENTOS);
-  if (!hoja || hoja.getLastRow() < 2) return [];
-  const datos = hoja.getRange(2, 1, hoja.getLastRow() - 1, 5).getValues();
-  return datos.map(fila => ({ fecha: formatearFecha(fila[0]), hora: String(fila[1] || ""), actividad: String(fila[2] || ""), tipo: String(fila[3] || ""), estado: String(fila[4] || "") }));
-}
 
-/* =====================================================
-   DASHBOARD
-   ===================================================== */
-function obtenerDashboard() {
-  const jugadores = listarJugadores();
-  const asistencias = listarAsistencias();
-  let activos = 0;
-  jugadores.forEach(j => { if (String(j.estado).toUpperCase() === "ACTIVO") activos++; });
+  /*
+   * =======================================================
+   * REGISTRO NUEVO
+   * =======================================================
+   */
 
-  const hoja = asegurarEstructuraCartera();
-  const datos = hoja.getLastRow() >= 2 ? hoja.getDataRange().getValues() : [];
-  const h = datos.length ? datos[0].map(String) : [];
-  const idxSaldo = h.indexOf("SaldoActual");
-  let carteraPendiente = 0;
-  if (idxSaldo >= 0) for (let i = 1; i < datos.length; i++) carteraPendiente += Math.max(0, numero(datos[i][idxSaldo]));
+  if (
+    respuesta.ok === true &&
+    estado === "REGISTRADO"
+  ) {
 
-  const movimientos = listarTodosMovimientosCartera();
-  return { jugadores: jugadores.length, activos: activos, asistencias: asistencias.length, pagos: movimientos.filter(m => m.tipoMovimiento === "PAGO").length, carteraPendiente: carteraPendiente };
-}
+    escaneosRegistrados++;
 
-/* =====================================================
-   FOTOS
-   ===================================================== */
-function subirFotoJugador(datos) {
-  try {
-    if (!datos || !datos.nombreArchivo || !datos.base64) throw new Error("No se recibió la foto.");
-    const carpeta = DriveApp.getFolderById("1aIAALFWTi_-2N0eLx0NjSOrHwY54mZei");
-    const partes = String(datos.base64).split(",");
-    if (partes.length < 2) throw new Error("Formato de imagen no válido.");
-    const blob = Utilities.newBlob(Utilities.base64Decode(partes[1]), datos.tipoMime || "image/jpeg", datos.nombreArchivo);
-    const archivo = carpeta.createFile(blob);
-    archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return { ok: true, url: "https://drive.google.com/thumbnail?id=" + archivo.getId() + "&sz=w800", nombre: archivo.getName() };
-  } catch (error) {
-    console.error("Error subiendo foto:", error);
-    return { ok: false, mensaje: error && error.message ? error.message : "Error al subir la foto." };
+
+    document.getElementById("contador").innerHTML =
+      "Registros confirmados: " +
+      escaneosRegistrados;
+
+
+    const jugador =
+      respuesta.jugador || {};
+
+
+    const nombre =
+      jugador.nombre ||
+      respuesta.nombre ||
+      "";
+
+
+    mostrarResultado(
+
+      "🟢" +
+
+      "<div class='jugador'>" +
+
+      (
+        tipo === "PREASISTENCIA"
+          ? "PREASISTENCIA REGISTRADA"
+          : "ASISTENCIA REGISTRADA"
+      ) +
+
+      "</div>" +
+
+      (
+        nombre
+          ? "<strong>" +
+            escaparHTML(nombre) +
+            "</strong><br><br>"
+          : ""
+      ) +
+
+      "<strong>Documento:</strong> " +
+      escaparHTML(documento) +
+
+      "<br><br>" +
+
+      "El sistema BÚFALOS FC confirmó el registro.",
+
+      "exito"
+
+    );
+
+
+    /*
+     * ESPERAMOS 2 SEGUNDOS Y VOLVEMOS
+     * AUTOMÁTICAMENTE A ESCANEAR.
+     */
+    prepararSiguienteEscaneo();
+
+
+    return;
+
   }
+
+
+  /*
+   * =======================================================
+   * DUPLICADO
+   * =======================================================
+   */
+
+  if (
+    respuesta.duplicado === true ||
+    estado === "DUPLICADO"
+  ) {
+
+    const nombre =
+      respuesta.nombre ||
+      (
+        respuesta.jugador &&
+        respuesta.jugador.nombre
+      ) ||
+      "";
+
+
+    mostrarResultado(
+
+      "🟡" +
+
+      "<div class='jugador'>" +
+      "YA REGISTRADO" +
+      "</div>" +
+
+      (
+        nombre
+          ? "<strong>" +
+            escaparHTML(nombre) +
+            "</strong><br><br>"
+          : ""
+      ) +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "Este jugador ya tiene registrado este evento."
+      ),
+
+      "duplicado"
+
+    );
+
+
+    /*
+     * TAMBIÉN CONTINUAMOS AUTOMÁTICAMENTE.
+     */
+    prepararSiguienteEscaneo();
+
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * JUGADOR NO ENCONTRADO
+   * =======================================================
+   */
+
+  if (
+    estado === "NO_ENCONTRADO"
+  ) {
+
+    mostrarResultado(
+
+      "🔴" +
+
+      "<div class='jugador'>" +
+      "JUGADOR NO ENCONTRADO" +
+      "</div>" +
+
+      "<strong>Documento:</strong> " +
+      escaparHTML(documento) +
+
+      "<br><br>" +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "No existe un jugador con este documento."
+      ),
+
+      "error"
+
+    );
+
+
+    /*
+     * Un documento desconocido no representa
+     * un riesgo de duplicar un registro válido.
+     *
+     * Por eso continuamos automáticamente.
+     */
+    prepararSiguienteEscaneo();
+
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * ERROR DESCONOCIDO
+   * =======================================================
+   *
+   * En errores inesperados detenemos el lector
+   * para seguridad.
+   */
+
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "ERROR EN EL REGISTRO" +
+    "</div>" +
+
+    escaparHTML(
+      respuesta.mensaje ||
+      "El sistema devolvió una respuesta inesperada."
+    ) +
+
+    "<br><br>" +
+
+    "Por seguridad, el lector fue detenido.",
+
+    "error"
+
+  );
+
+
+  detenerLector();
+
 }
 
-function autorizarDrive() {
-  return DriveApp.getFolderById("1aIAALFWTi_-2N0eLx0NjSOrHwY54mZei").getName();
+
+/* =========================================================
+   PREPARAR SIGUIENTE ESCANEO
+========================================================= */
+
+function prepararSiguienteEscaneo() {
+
+  /*
+   * Verificamos que el lector siga activo.
+   */
+  if (!lectorActivo) {
+
+    return;
+
+  }
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟢 LECTOR ACTIVO — PREPARE EL SIGUIENTE CARNET";
+
+
+  /*
+   * Esperamos un pequeño tiempo para:
+   *
+   * 1. Evitar que la misma imagen del QR
+   *    vuelva a detectarse inmediatamente.
+   *
+   * 2. Dar tiempo al usuario para retirar
+   *    el carnet anterior.
+   */
+  setTimeout(function() {
+
+    if (!lectorActivo) {
+
+      return;
+
+    }
+
+
+    carnetBloqueado = false;
+
+
+    mostrarResultado(
+      "",
+      "oculto"
+    );
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE EL SIGUIENTE CARNET";
+
+
+    console.log(
+      "LECTOR DESBLOQUEADO — LISTO PARA SIGUIENTE CARNET"
+    );
+
+  }, TIEMPO_ENTRE_ESCANEOS);
+
 }
 
-function probarCrearArchivoDrive() {
-  const carpeta = DriveApp.getFolderById("1aIAALFWTi_-2N0eLx0NjSOrHwY54mZei");
-  return carpeta.createFile("PRUEBA_DRIVE.txt", "Prueba de autorización de BÚFALOS FC", MimeType.PLAIN_TEXT).getName();
+
+/* =========================================================
+   ERROR DE RESPUESTA
+========================================================= */
+
+function mostrarErrorRespuesta() {
+
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "NO SE RECIBIÓ CONFIRMACIÓN" +
+    "</div>" +
+
+    "El servidor no devolvió una respuesta válida." +
+
+    "<br><br>" +
+
+    "Por seguridad, el lector fue detenido.",
+
+    "error"
+
+  );
+
+
+  detenerLector();
+
 }
 
 
+/* =========================================================
+   LIMPIAR JSONP
+========================================================= */
+
+function limpiarJSONP(
+  callback,
+  script
+) {
+
+  try {
+
+    if (
+      script &&
+      script._bufalosTimeout
+    ) {
+
+      clearTimeout(
+        script._bufalosTimeout
+      );
+
+    }
+
+  } catch(error) {}
+
+
+  try {
+
+    if (
+      script &&
+      script.parentNode
+    ) {
+
+      script.parentNode.removeChild(
+        script
+      );
+
+    }
+
+  } catch(error) {}
+
+
+  try {
+
+    delete window[callback];
+
+  } catch(error) {
+
+    window[callback] =
+      undefined;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOSTRAR RESULTADO
+========================================================= */
+
+function mostrarResultado(
+  contenido,
+  tipo
+) {
+
+  const elemento =
+    document.getElementById("resultado");
+
+
+  elemento.className =
+    "resultado " +
+    tipo;
+
+
+  elemento.innerHTML =
+    contenido;
+
+
+  if (tipo === "oculto") {
+
+    elemento.classList.add(
+      "oculto"
+    );
+
+  } else {
+
+    elemento.classList.remove(
+      "oculto"
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ESPERAR
+========================================================= */
+
+function esperar(milisegundos) {
+
+  return new Promise(function(resolve) {
+
+    setTimeout(
+      resolve,
+      milisegundos
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   HTML SEGURO
+========================================================= */
+
+function escaparHTML(texto) {
+
+  const div =
+    document.createElement("div");
+
+
+  div.textContent =
+    String(texto || "");
+
+
+  return div.innerHTML;
+
+}
+
+</script>
+
+</body>
+</html>
