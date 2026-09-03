@@ -379,7 +379,7 @@ let tiempoUltimoDocumento = 0;
    INICIAR LECTOR
    ===================================================== */
 
-function iniciarLector() {
+async function iniciarLector() {
 
   if (lectorActivo) {
     return;
@@ -389,59 +389,271 @@ function iniciarLector() {
   const estado =
     document.getElementById("estado");
 
+  const boton =
+    document.getElementById("btnIniciar");
+
 
   estado.className =
     "estado";
 
-
   estado.textContent =
-    "Solicitando acceso a la cámara...";
+    "🔎 Comprobando cámara...";
+
+  boton.disabled = true;
 
 
-  lector =
-    new Html5Qrcode("reader");
+  try {
 
 
-  lector.start(
+    /* =============================================
+       1. COMPROBAR SOPORTE DEL NAVEGADOR
+       ============================================= */
 
-    {
-      facingMode: "environment"
-    },
+    if (!navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia) {
 
-    {
-
-      fps: 10,
-
-      qrbox: {
-        width: 250,
-        height: 250
-      },
-
-      aspectRatio: 1.0
-
-    },
-
-
-    function(decodedText) {
-
-      procesarQR(decodedText);
-
-    },
-
-
-    function(errorMessage) {
-
-      // Errores normales de lectura
-      // no se muestran.
+      throw new Error(
+        "El navegador no permite acceso a la cámara mediante getUserMedia."
+      );
 
     }
 
-  )
+
+    /* =============================================
+       2. PEDIR PERMISO DIRECTAMENTE
+       ============================================= */
+
+    estado.textContent =
+      "📷 Solicitando permiso para la cámara...";
 
 
-  .then(function() {
+    let stream = null;
+
+
+    try {
+
+      stream =
+        await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: {
+              ideal: "environment"
+            }
+          },
+          audio: false
+        });
+
+    } catch (error) {
+
+      console.error(
+        "ERROR getUserMedia:",
+        error
+      );
+
+      throw new Error(
+        "La cámara no pudo ser activada. " +
+        "Código: " +
+        (error.name || "DESCONOCIDO") +
+        " - " +
+        (error.message || "Sin detalle")
+      );
+
+    }
+
+
+    /* =============================================
+       3. DETENER STREAM DE PRUEBA
+       ============================================= */
+
+    if (stream) {
+
+      stream.getTracks().forEach(function(track) {
+
+        track.stop();
+
+      });
+
+    }
+
+
+    /* =============================================
+       4. COMPROBAR CÁMARAS DISPONIBLES
+       ============================================= */
+
+    estado.textContent =
+      "📷 Detectando cámaras disponibles...";
+
+
+    const camaras =
+      await Html5Qrcode.getCameras();
+
+
+    console.log(
+      "CÁMARAS DETECTADAS:",
+      camaras
+    );
+
+
+    if (!camaras || camaras.length === 0) {
+
+      throw new Error(
+        "El navegador no detectó ninguna cámara."
+      );
+
+    }
+
+
+    /* =============================================
+       5. SELECCIONAR CÁMARA
+       ============================================= */
+
+    let cameraId =
+      null;
+
+
+    /*
+     * Intentamos encontrar una cámara trasera.
+     */
+
+    const camaraTrasera =
+      camaras.find(function(camara) {
+
+        const nombre =
+          String(
+            camara.label || ""
+          ).toLowerCase();
+
+        return (
+
+          nombre.includes("back") ||
+
+          nombre.includes("rear") ||
+
+          nombre.includes("environment") ||
+
+          nombre.includes("trasera") ||
+
+          nombre.includes("posterior")
+
+        );
+
+      });
+
+
+    if (camaraTrasera) {
+
+      cameraId =
+        camaraTrasera.id;
+
+    } else {
+
+      /*
+       * Si no encontramos una cámara trasera,
+       * usamos la primera disponible.
+       */
+
+      cameraId =
+        camaras[0].id;
+
+    }
+
+
+    console.log(
+      "CÁMARA SELECCIONADA:",
+      cameraId
+    );
+
+
+    /* =============================================
+       6. LIMPIAR LECTOR ANTERIOR
+       ============================================= */
+
+    if (lector) {
+
+      try {
+
+        await lector.clear();
+
+      } catch (e) {
+
+        console.log(
+          "No había lector anterior que limpiar.",
+          e
+        );
+
+      }
+
+    }
+
+
+    document.getElementById("reader")
+      .innerHTML = "";
+
+
+    /* =============================================
+       7. CREAR NUEVO LECTOR
+       ============================================= */
+
+    lector =
+      new Html5Qrcode("reader");
+
+
+    estado.textContent =
+      "📷 Iniciando lector QR...";
+
+
+    /* =============================================
+       8. INICIAR CÁMARA
+       ============================================= */
+
+    await lector.start(
+
+      cameraId,
+
+      {
+
+        fps: 10,
+
+        qrbox: {
+          width: 250,
+          height: 250
+        },
+
+        aspectRatio: 1.0,
+
+        rememberLastUsedCamera: true
+
+      },
+
+
+      function(decodedText) {
+
+        procesarQR(decodedText);
+
+      },
+
+
+      function(errorMessage) {
+
+        /*
+         * Estos errores son normales mientras
+         * la cámara busca un QR.
+         */
+
+      }
+
+    );
+
+
+    /* =============================================
+       9. LECTOR ACTIVO
+       ============================================= */
 
     lectorActivo = true;
+
+    boton.disabled = false;
+
+    boton.textContent =
+      "🟢 LECTOR ACTIVO";
 
 
     estado.className =
@@ -451,12 +663,33 @@ function iniciarLector() {
     estado.textContent =
       "🟢 LECTOR ACTIVO — Escanee un carnet";
 
-  })
+
+    mostrarMensaje(
+
+      "📷 Cámara lista.<br><br>" +
+      "Escanee el código QR del carnet.",
+
+      "resultado-diagnostico"
+
+    );
 
 
-  .catch(function(error) {
+  } catch (error) {
+
+
+    console.error(
+      "ERROR COMPLETO DE CÁMARA:",
+      error
+    );
+
 
     lectorActivo = false;
+
+
+    boton.disabled = false;
+
+    boton.textContent =
+      "📷 INICIAR LECTOR";
 
 
     estado.className =
@@ -466,9 +699,69 @@ function iniciarLector() {
     estado.textContent =
       "❌ No fue posible iniciar la cámara.";
 
-    console.log(error);
 
-  });
+    mostrarMensaje(
+
+      "<div class='diagnostico-titulo'>" +
+
+      "❌ ERROR DE CÁMARA" +
+
+      "</div>" +
+
+      "<pre>" +
+
+      escapar(
+
+        error && error.message
+
+          ? error.message
+
+          : String(error)
+
+      ) +
+
+      "</pre>" +
+
+      "<br>" +
+
+      "<strong>Información del navegador:</strong>" +
+
+      "<br>" +
+
+      "Protocolo: " +
+
+      escapar(
+        location.protocol
+      ) +
+
+      "<br>" +
+
+      "Host: " +
+
+      escapar(
+        location.hostname
+      ) +
+
+      "<br>" +
+
+      "getUserMedia: " +
+
+      (
+
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+
+          ? "Disponible"
+
+          : "NO disponible"
+
+      ),
+
+      "resultado-diagnostico"
+
+    );
+
+  }
 
 }
 
@@ -477,12 +770,21 @@ function iniciarLector() {
    DETENER LECTOR
    ===================================================== */
 
-function detenerLector() {
+async function detenerLector() {
 
-  if (!lector || !lectorActivo) {
+  const estado =
+    document.getElementById("estado");
 
-    document.getElementById("estado")
-      .textContent =
+  const boton =
+    document.getElementById("btnIniciar");
+
+
+  if (!lector) {
+
+    estado.className =
+      "estado";
+
+    estado.textContent =
       "Lector detenido.";
 
     return;
@@ -490,34 +792,60 @@ function detenerLector() {
   }
 
 
-  lector.stop()
+  try {
 
-    .then(function() {
+    if (lectorActivo) {
 
-      lector.clear();
+      await lector.stop();
 
-      lectorActivo = false;
+    }
 
+  } catch (error) {
 
-      document.getElementById("estado")
-        .className =
-        "estado";
+    console.log(
+      "Error al detener:",
+      error
+    );
 
-
-      document.getElementById("estado")
-        .textContent =
-        "Lector detenido.";
-
-    })
+  }
 
 
-    .catch(function(error) {
+  try {
 
-      console.log(error);
+    await lector.clear();
 
-      lectorActivo = false;
+  } catch (error) {
 
-    });
+    console.log(
+      "Error al limpiar:",
+      error
+    );
+
+  }
+
+
+  lector = null;
+
+  lectorActivo = false;
+
+  procesando = false;
+
+
+  document.getElementById("reader")
+    .innerHTML = "";
+
+
+  boton.disabled = false;
+
+  boton.textContent =
+    "📷 INICIAR LECTOR";
+
+
+  estado.className =
+    "estado";
+
+  estado.textContent =
+    "Lector detenido.";
 
 }
 
@@ -802,11 +1130,6 @@ function registrarAsistencia(
     );
 
 
-    /*
-     * PRIMERO intentamos convertir
-     * la respuesta a JSON.
-     */
-
     let data;
 
 
@@ -843,23 +1166,15 @@ function registrarAsistencia(
     }
 
 
-    /*
-     * =============================================
-     * MOSTRAR RESPUESTA DEL SERVIDOR
-     * =============================================
-     */
-
     console.log(
       "OBJETO RECIBIDO:",
       data
     );
 
 
-    /*
-     * =============================================
-     * DUPLICADO
-     * =============================================
-     */
+    /* =============================================
+       DUPLICADO
+       ============================================= */
 
     if (
 
@@ -887,8 +1202,11 @@ function registrarAsistencia(
           data.nombre ||
 
           (
+
             jugador &&
+
             jugador.nombre
+
           ) ||
 
           ""
@@ -942,7 +1260,9 @@ function registrarAsistencia(
         escapar(
 
           String(
+
             data.estado || ""
+
           )
 
         ) +
@@ -954,24 +1274,16 @@ function registrarAsistencia(
       );
 
 
-      /*
-       * Cinco segundos para que
-       * podamos verlo claramente.
-       */
-
       liberarProcesamiento(5000);
-
 
       return;
 
     }
 
 
-    /*
-     * =============================================
-     * ERROR
-     * =============================================
-     */
+    /* =============================================
+       ERROR
+       ============================================= */
 
     if (!data.ok) {
 
@@ -1007,11 +1319,17 @@ function registrarAsistencia(
         "<pre>" +
 
         escapar(
+
           JSON.stringify(
+
             data,
+
             null,
+
             2
+
           )
+
         ) +
 
         "</pre>",
@@ -1023,17 +1341,14 @@ function registrarAsistencia(
 
       liberarProcesamiento(5000);
 
-
       return;
 
     }
 
 
-    /*
-     * =============================================
-     * REGISTRO CORRECTO
-     * =============================================
-     */
+    /* =============================================
+       REGISTRO CORRECTO
+       ============================================= */
 
     totalEscaneos++;
 
@@ -1122,7 +1437,9 @@ function registrarAsistencia(
       "<pre>" +
 
       escapar(
+
         error.toString()
+
       ) +
 
       "</pre>",
@@ -1144,7 +1461,9 @@ function registrarAsistencia(
    ===================================================== */
 
 function liberarProcesamiento(
+
   milisegundos
+
 ) {
 
   setTimeout(function() {
