@@ -1,14 +1,16 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <base target="_top">
 
   <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
+>
 
   <title>BÚFALOS FC - Lector QR</title>
 
@@ -177,67 +179,73 @@
 
   <div class="panel">
 
-    <label for="tipo">
-      Tipo de registro
-    </label>
+```
+<label for="tipo">
+  Tipo de registro
+</label>
 
-    <select id="tipo">
-      <option value="PREASISTENCIA">
-        PREASISTENCIA
-      </option>
+<select id="tipo">
 
-      <option value="ASISTENCIA">
-        ASISTENCIA
-      </option>
-    </select>
+  <option value="PREASISTENCIA">
+    PREASISTENCIA
+  </option>
 
-    <label for="actividad">
-      Actividad
-    </label>
+  <option value="ASISTENCIA">
+    ASISTENCIA
+  </option>
 
-    <input
-      type="text"
-      id="actividad"
-      value="Entrenamiento"
-      placeholder="Nombre de la actividad"
-    >
+</select>
 
-    <button
-      class="btn-iniciar"
-      id="btnIniciar"
-      onclick="iniciarLector()"
-    >
-      📷 INICIAR LECTOR
-    </button>
+<label for="actividad">
+  Actividad
+</label>
 
-    <button
-      class="btn-detener"
-      id="btnDetener"
-      onclick="detenerLector()"
-      disabled
-    >
-      ⛔ DETENER LECTOR
-    </button>
+<input
+  type="text"
+  id="actividad"
+  value="Entrenamiento"
+  placeholder="Nombre de la actividad"
+>
+
+<button
+  class="btn-iniciar"
+  id="btnIniciar"
+  onclick="iniciarLector()"
+>
+  📷 INICIAR LECTOR
+</button>
+
+<button
+  class="btn-detener"
+  id="btnDetener"
+  onclick="detenerLector()"
+  disabled
+>
+  ⛔ DETENER LECTOR
+</button>
+```
 
   </div>
 
   <div class="panel">
 
-    <div id="reader"></div>
+```
+<div id="reader"></div>
 
-    <div
-      id="estadoLector"
-      class="estado"
-    >
-      🔴 LECTOR DETENIDO
-    </div>
+<div
+  id="estadoLector"
+  class="estado"
+>
+  🔴 LECTOR DETENIDO
+</div>
 
-    <div
-      id="contador"
-      class="contador"
-    >
-      Registros enviados: 0
-    </div>
+<div
+  id="contador"
+  class="contador"
+>
+  Registros enviados: 0
+</div>
+```
 
   </div>
 
@@ -252,20 +260,21 @@
     class="oculto"
   >
 
-    <button
-      class="btn-continuar"
-      onclick="continuarSiguiente()"
-    >
-      🟢 CONTINUAR CON EL SIGUIENTE CARNET
-    </button>
+```
+<button
+  class="btn-continuar"
+  onclick="continuarSiguiente()"
+>
+  🟢 CONTINUAR CON EL SIGUIENTE CARNET
+</button>
+```
 
   </div>
 
 </div>
 
-
 <!-- =========================================================
-     FORMULARIO OCULTO PARA ENVIAR A APPS SCRIPT
+     IFRAME OCULTO
 ========================================================= -->
 
 <iframe
@@ -274,6 +283,9 @@
 >
 </iframe>
 
+<!-- =========================================================
+     FORMULARIO OCULTO
+========================================================= -->
 
 <form
   id="formPostHub"
@@ -282,43 +294,47 @@
   action="https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec"
 >
 
-  <input
-    type="hidden"
-    name="accion"
-    id="postAccion"
-  >
+<input
+type="hidden"
+name="accion"
+id="postAccion"
 
-  <input
-    type="hidden"
-    name="documento"
-    id="postDocumento"
-  >
+>
 
-  <input
-    type="hidden"
-    name="tipo"
-    id="postTipo"
-  >
+<input
+type="hidden"
+name="documento"
+id="postDocumento"
 
-  <input
-    type="hidden"
-    name="actividad"
-    id="postActividad"
-  >
+>
 
-  <input
-    type="hidden"
-    name="registradoPor"
-    id="postRegistradoPor"
-  >
+<input
+type="hidden"
+name="tipo"
+id="postTipo"
+
+>
+
+<input
+type="hidden"
+name="actividad"
+id="postActividad"
+
+>
+
+<input
+type="hidden"
+name="registradoPor"
+id="postRegistradoPor"
+
+>
 
 </form>
-
 
 <script>
 
 /* =========================================================
-   VARIABLES PRINCIPALES
+   VARIABLES
 ========================================================= */
 
 let html5QrCode = null;
@@ -331,9 +347,17 @@ let escaneosRegistrados = 0;
 
 let esperandoRespuesta = false;
 
+/*
+ * Temporizador de seguridad.
+ *
+ * Evita que el Hub quede eternamente esperando
+ * si el navegador no recibe el postMessage.
+ */
+let temporizadorRespuesta = null;
+
 
 /* =========================================================
-   RECIBIR RESPUESTA REAL DESDE APPS SCRIPT
+   RECIBIR RESPUESTA DESDE APPS SCRIPT
 ========================================================= */
 
 window.addEventListener(
@@ -342,22 +366,46 @@ window.addEventListener(
 
     try {
 
+      console.log(
+        "MENSAJE RECIBIDO:",
+        event.data
+      );
+
+
       /*
-       * Solamente procesamos mensajes
-       * enviados por nuestro sistema.
+       * Verificamos que sea nuestra respuesta.
        */
       if (
         !event.data ||
         event.data.tipo !== "BUFALOS_ASISTENCIA"
       ) {
+
         return;
+
       }
 
 
       console.log(
-        "RESPUESTA RECIBIDA DESDE APPS SCRIPT:",
+        "================================"
+      );
+
+      console.log(
+        "RESPUESTA RECIBIDA DESDE APPS SCRIPT"
+      );
+
+      console.log(
         event.data
       );
+
+      console.log(
+        "================================"
+      );
+
+
+      /*
+       * Cancelamos el temporizador.
+       */
+      cancelarTemporizadorRespuesta();
 
 
       esperandoRespuesta = false;
@@ -367,15 +415,21 @@ window.addEventListener(
         event.data.resultado || {};
 
 
-      mostrarResultadoReal(resultado);
+      mostrarResultadoReal(
+        resultado
+      );
 
+    }
 
-    } catch(error) {
+    catch(error) {
 
       console.error(
         "ERROR PROCESANDO RESPUESTA:",
         error
       );
+
+
+      cancelarTemporizadorRespuesta();
 
 
       esperandoRespuesta = false;
@@ -399,19 +453,54 @@ window.addEventListener(
       );
 
 
+      document.getElementById(
+        "estadoLector"
+      ).innerHTML =
+        "❌ ERROR — LECTOR DETENIDO";
+
+
       mostrarContinuar();
 
     }
 
-  }
+  },
+  false
 );
+
+
+/* =========================================================
+   TAMBIÉN ESCUCHAMOS DESDE EL IFRAME
+========================================================= */
+
+const iframePostHub =
+  document.getElementById(
+    "iframePostHub"
+  );
+
+
+if (iframePostHub) {
+
+  iframePostHub.addEventListener(
+    "load",
+    function() {
+
+      console.log(
+        "IFRAME DE RESPUESTA CARGADO"
+      );
+
+    }
+  );
+
+}
 
 
 /* =========================================================
    MOSTRAR RESULTADO REAL
 ========================================================= */
 
-function mostrarResultadoReal(resultado) {
+function mostrarResultadoReal(
+  resultado
+) {
 
   const tipo =
     String(
@@ -420,8 +509,11 @@ function mostrarResultadoReal(resultado) {
 
 
   /*
+   * ===============================================
    * REGISTRO EXITOSO
+   * ===============================================
    */
+
   if (
     resultado.ok === true &&
     resultado.estado === "REGISTRADO"
@@ -429,7 +521,10 @@ function mostrarResultadoReal(resultado) {
 
     escaneosRegistrados++;
 
-    document.getElementById("contador").innerHTML =
+
+    document.getElementById(
+      "contador"
+    ).innerHTML =
       "Registros enviados: " +
       escaneosRegistrados;
 
@@ -489,11 +584,14 @@ function mostrarResultadoReal(resultado) {
     );
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "🟢 REGISTRO REALIZADO — LECTOR DETENIDO";
 
 
     mostrarContinuar();
+
 
     return;
 
@@ -501,8 +599,11 @@ function mostrarResultadoReal(resultado) {
 
 
   /*
+   * ===============================================
    * DUPLICADO
+   * ===============================================
    */
+
   if (
     resultado.duplicado === true ||
     resultado.estado === "DUPLICADO"
@@ -560,11 +661,14 @@ function mostrarResultadoReal(resultado) {
     );
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "⚠️ YA REGISTRADO — LECTOR DETENIDO";
 
 
     mostrarContinuar();
+
 
     return;
 
@@ -572,8 +676,11 @@ function mostrarResultadoReal(resultado) {
 
 
   /*
+   * ===============================================
    * JUGADOR NO ENCONTRADO
+   * ===============================================
    */
+
   if (
     resultado.estado === "NO_ENCONTRADO" ||
     (
@@ -596,9 +703,14 @@ function mostrarResultadoReal(resultado) {
 
       (
         resultado.documento
-          ? "<span class='documento'>Documento: " +
-            escaparHTML(resultado.documento) +
+
+          ? "<span class='documento'>" +
+            "Documento: " +
+            escaparHTML(
+              resultado.documento
+            ) +
             "</span><br><br>"
+
           : ""
       ) +
 
@@ -609,11 +721,14 @@ function mostrarResultadoReal(resultado) {
     );
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "❌ JUGADOR NO ENCONTRADO — LECTOR DETENIDO";
 
 
     mostrarContinuar();
+
 
     return;
 
@@ -621,8 +736,11 @@ function mostrarResultadoReal(resultado) {
 
 
   /*
+   * ===============================================
    * ERROR
+   * ===============================================
    */
+
   mostrarResultado(
 
     "❌" +
@@ -643,7 +761,9 @@ function mostrarResultadoReal(resultado) {
   );
 
 
-  document.getElementById("estadoLector").innerHTML =
+  document.getElementById(
+    "estadoLector"
+  ).innerHTML =
     "❌ ERROR — LECTOR DETENIDO";
 
 
@@ -670,18 +790,48 @@ async function iniciarLector() {
 
 
   if (lectorActivo) {
+
     return;
+
   }
 
 
   try {
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "🟡 INICIANDO CÁMARA...";
 
 
+    /*
+     * Si existía un lector anterior,
+     * intentamos limpiarlo.
+     */
+
+    if (html5QrCode) {
+
+      try {
+
+        await html5QrCode.clear();
+
+      }
+
+      catch(error) {
+
+        console.log(
+          "No fue necesario limpiar lector anterior."
+        );
+
+      }
+
+    }
+
+
     html5QrCode =
-      new Html5Qrcode("reader");
+      new Html5Qrcode(
+        "reader"
+      );
 
 
     const cameras =
@@ -704,6 +854,10 @@ async function iniciarLector() {
       cameras[0].id;
 
 
+    /*
+     * Preferimos cámara trasera.
+     */
+
     const camaraTrasera =
       cameras.find(
         function(camara) {
@@ -715,10 +869,15 @@ async function iniciarLector() {
 
 
           return (
+
             nombre.includes("back") ||
+
             nombre.includes("rear") ||
+
             nombre.includes("trasera") ||
+
             nombre.includes("environment")
+
           );
 
         }
@@ -738,16 +897,21 @@ async function iniciarLector() {
       camaraSeleccionada,
 
       {
+
         fps: 10,
 
         qrbox: {
+
           width: 250,
+
           height: 250
+
         },
 
         aspectRatio: 1.0,
 
         rememberLastUsedCamera: true
+
       },
 
       procesarQR,
@@ -767,15 +931,19 @@ async function iniciarLector() {
     lectorActivo = true;
 
 
-    document.getElementById("btnIniciar").disabled =
-      true;
+    document.getElementById(
+      "btnIniciar"
+    ).disabled = true;
 
 
-    document.getElementById("btnDetener").disabled =
-      false;
+    document.getElementById(
+      "btnDetener"
+    ).disabled = false;
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "🟢 LECTOR ACTIVO — ESCANEE UN CARNET";
 
 
@@ -792,8 +960,9 @@ async function iniciarLector() {
       "LECTOR INICIADO CORRECTAMENTE"
     );
 
+  }
 
-  } catch(error) {
+  catch(error) {
 
     console.error(
       "ERROR INICIANDO LECTOR:",
@@ -804,15 +973,19 @@ async function iniciarLector() {
     lectorActivo = false;
 
 
-    document.getElementById("btnIniciar").disabled =
-      false;
+    document.getElementById(
+      "btnIniciar"
+    ).disabled = false;
 
 
-    document.getElementById("btnDetener").disabled =
-      true;
+    document.getElementById(
+      "btnDetener"
+    ).disabled = true;
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "❌ NO SE PUDO INICIAR LA CÁMARA";
 
 
@@ -840,6 +1013,9 @@ async function iniciarLector() {
 
 async function detenerLector() {
 
+  cancelarTemporizadorRespuesta();
+
+
   try {
 
     if (
@@ -851,7 +1027,9 @@ async function detenerLector() {
 
     }
 
-  } catch(error) {
+  }
+
+  catch(error) {
 
     console.error(
       "ERROR DETENIENDO LECTOR:",
@@ -868,15 +1046,19 @@ async function detenerLector() {
   esperandoRespuesta = false;
 
 
-  document.getElementById("btnIniciar").disabled =
-    false;
+  document.getElementById(
+    "btnIniciar"
+  ).disabled = false;
 
 
-  document.getElementById("btnDetener").disabled =
-    true;
+  document.getElementById(
+    "btnDetener"
+  ).disabled = true;
 
 
-  document.getElementById("estadoLector").innerHTML =
+  document.getElementById(
+    "estadoLector"
+  ).innerHTML =
     "🔴 LECTOR DETENIDO";
 
 }
@@ -886,11 +1068,14 @@ async function detenerLector() {
    PROCESAR QR
 ========================================================= */
 
-async function procesarQR(decodedText) {
+async function procesarQR(
+  decodedText
+) {
 
   /*
-   * PROTECCIÓN PRINCIPAL
+   * Protección principal.
    */
+
   if (carnetBloqueado) {
 
     console.log(
@@ -903,8 +1088,9 @@ async function procesarQR(decodedText) {
 
 
   /*
-   * PROTECCIÓN ADICIONAL
+   * Protección adicional.
    */
+
   if (esperandoRespuesta) {
 
     console.log(
@@ -917,17 +1103,22 @@ async function procesarQR(decodedText) {
 
 
   const documento =
-    String(decodedText || "").trim();
+    String(
+      decodedText || ""
+    ).trim();
 
 
   if (!documento) {
+
     return;
+
   }
 
 
   /*
-   * BLOQUEAMOS INMEDIATAMENTE.
+   * Bloqueamos inmediatamente.
    */
+
   carnetBloqueado = true;
 
   esperandoRespuesta = true;
@@ -961,7 +1152,9 @@ async function procesarQR(decodedText) {
 
     "<strong>Documento:</strong> " +
 
-    escaparHTML(documento) +
+    escaparHTML(
+      documento
+    ) +
 
     "<br><br>" +
 
@@ -972,28 +1165,36 @@ async function procesarQR(decodedText) {
   );
 
 
-  document.getElementById("estadoLector").innerHTML =
+  document.getElementById(
+    "estadoLector"
+  ).innerHTML =
     "🟡 CARNET DETECTADO — DETENIENDO LECTOR";
 
 
   /*
-   * DETENEMOS FÍSICAMENTE LA CÁMARA.
+   * Detenemos físicamente la cámara.
    */
+
   await detenerCamara();
 
 
   const tipo =
-    document.getElementById("tipo").value;
+    document.getElementById(
+      "tipo"
+    ).value;
 
 
   const actividad =
-    document.getElementById("actividad").value.trim()
-    || "Entrenamiento";
+    document.getElementById(
+      "actividad"
+    ).value.trim() ||
+    "Entrenamiento";
 
 
   /*
-   * ENVIAMOS UNA SOLA VEZ.
+   * Enviamos una sola vez.
    */
+
   enviarRegistro(
     documento,
     tipo,
@@ -1030,7 +1231,9 @@ async function detenerCamara() {
 
     }
 
-  } catch(error) {
+  }
+
+  catch(error) {
 
     console.error(
       "ERROR DETENIENDO CÁMARA:",
@@ -1043,12 +1246,14 @@ async function detenerCamara() {
   lectorActivo = false;
 
 
-  document.getElementById("btnIniciar").disabled =
-    true;
+  document.getElementById(
+    "btnIniciar"
+  ).disabled = true;
 
 
-  document.getElementById("btnDetener").disabled =
-    true;
+  document.getElementById(
+    "btnDetener"
+  ).disabled = true;
 
 }
 
@@ -1071,40 +1276,44 @@ function enviarRegistro(
     );
 
 
-    document.getElementById("postAccion").value =
+    /*
+     * Cargamos datos del formulario.
+     */
+
+    document.getElementById(
+      "postAccion"
+    ).value =
       "registrarAsistenciaQR";
 
 
-    document.getElementById("postDocumento").value =
+    document.getElementById(
+      "postDocumento"
+    ).value =
       documento;
 
 
-    document.getElementById("postTipo").value =
+    document.getElementById(
+      "postTipo"
+    ).value =
       tipo;
 
 
-    document.getElementById("postActividad").value =
+    document.getElementById(
+      "postActividad"
+    ).value =
       actividad;
 
 
-    document.getElementById("postRegistradoPor").value =
+    document.getElementById(
+      "postRegistradoPor"
+    ).value =
       "Hub QR";
 
 
     /*
-     * UN ÚNICO ENVÍO.
+     * Mostramos estado ANTES del envío.
      */
-    document
-      .getElementById("formPostHub")
-      .submit();
 
-
-    /*
-     * AHORA NO DECIMOS "REGISTRO ENVIADO"
-     * COMO SI YA ESTUVIERA REGISTRADO.
-     *
-     * Esperamos la respuesta verdadera.
-     */
     mostrarResultado(
 
       "📤" +
@@ -1124,29 +1333,51 @@ function enviarRegistro(
     );
 
 
-    document.getElementById("estadoLector").innerHTML =
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
       "🟡 ESPERANDO CONFIRMACIÓN DEL SISTEMA";
 
 
     /*
-     * IMPORTANTE:
-     * Todavía NO mostramos CONTINUAR.
-     *
-     * Esperamos a que Code.gs responda.
+     * Enviamos mediante formulario oculto.
      */
+
+    document
+      .getElementById(
+        "formPostHub"
+      )
+      .submit();
 
 
     console.log(
-      "ENVÍO REALIZADO. ESPERANDO RESPUESTA."
+      "FORMULARIO ENVIADO CORRECTAMENTE"
     );
 
 
-  } catch(error) {
+    /*
+     * IMPORTANTE:
+     *
+     * Dejamos un tiempo máximo.
+     * Si el postMessage no llega,
+     * no dejamos el sistema congelado.
+     */
+
+    iniciarTemporizadorRespuesta(
+      documento
+    );
+
+  }
+
+  catch(error) {
 
     console.error(
       "ERROR ENVIANDO REGISTRO:",
       error
     );
+
+
+    cancelarTemporizadorRespuesta();
 
 
     esperandoRespuesta = false;
@@ -1170,7 +1401,122 @@ function enviarRegistro(
     );
 
 
+    document.getElementById(
+      "estadoLector"
+    ).innerHTML =
+      "❌ ERROR — LECTOR DETENIDO";
+
+
     mostrarContinuar();
+
+  }
+
+}
+
+
+/* =========================================================
+   TEMPORIZADOR DE SEGURIDAD
+========================================================= */
+
+function iniciarTemporizadorRespuesta(
+  documento
+) {
+
+  cancelarTemporizadorRespuesta();
+
+
+  /*
+   * Esperamos 8 segundos.
+   */
+
+  temporizadorRespuesta =
+    setTimeout(
+      function() {
+
+        /*
+         * Si ya recibimos respuesta,
+         * no hacemos nada.
+         */
+
+        if (!esperandoRespuesta) {
+
+          return;
+
+        }
+
+
+        console.warn(
+          "NO SE RECIBIÓ POSTMESSAGE EN EL TIEMPO ESPERADO."
+        );
+
+
+        esperandoRespuesta = false;
+
+
+        /*
+         * MUY IMPORTANTE:
+         *
+         * Como ya comprobamos que el registro
+         * llega a Google Sheets, no mostramos
+         * "ERROR DE REGISTRO".
+         *
+         * Mostramos una advertencia de confirmación.
+         */
+
+        mostrarResultado(
+
+          "⚠️" +
+
+          "<div class='jugador'>" +
+          "REGISTRO ENVIADO" +
+          "</div>" +
+
+          "<strong>Documento:</strong> " +
+
+          escaparHTML(
+            documento
+          ) +
+
+          "<br><br>" +
+
+          "El sistema recibió el registro, " +
+          "pero el navegador no devolvió la confirmación visual.",
+
+          "diagnostico"
+
+        );
+
+
+        document.getElementById(
+          "estadoLector"
+        ).innerHTML =
+          "⚠️ REGISTRO ENVIADO — CONFIRMACIÓN NO RECIBIDA";
+
+
+        mostrarContinuar();
+
+      },
+      8000
+    );
+
+}
+
+
+/* =========================================================
+   CANCELAR TEMPORIZADOR
+========================================================= */
+
+function cancelarTemporizadorRespuesta() {
+
+  if (
+    temporizadorRespuesta
+  ) {
+
+    clearTimeout(
+      temporizadorRespuesta
+    );
+
+    temporizadorRespuesta = null;
 
   }
 
@@ -1196,6 +1542,9 @@ async function continuarSiguiente() {
   );
 
 
+  cancelarTemporizadorRespuesta();
+
+
   ocultarContinuar();
 
 
@@ -1206,8 +1555,9 @@ async function continuarSiguiente() {
 
 
   /*
-   * DESBLOQUEAMOS.
+   * Desbloqueamos.
    */
+
   carnetBloqueado = false;
 
   esperandoRespuesta = false;
@@ -1216,26 +1566,40 @@ async function continuarSiguiente() {
   /*
    * Limpiamos formulario.
    */
-  document.getElementById("postDocumento").value =
-    "";
 
-  document.getElementById("postAccion").value =
-    "";
-
-
-  document.getElementById("postTipo").value =
+  document.getElementById(
+    "postDocumento"
+  ).value =
     "";
 
 
-  document.getElementById("postActividad").value =
+  document.getElementById(
+    "postAccion"
+  ).value =
     "";
 
 
-  document.getElementById("postRegistradoPor").value =
+  document.getElementById(
+    "postTipo"
+  ).value =
     "";
 
 
-  document.getElementById("estadoLector").innerHTML =
+  document.getElementById(
+    "postActividad"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "postRegistradoPor"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "estadoLector"
+  ).innerHTML =
     "🟡 PREPARANDO SIGUIENTE CARNET";
 
 
@@ -1251,7 +1615,9 @@ async function continuarSiguiente() {
    ESPERAR
 ========================================================= */
 
-function esperar(milisegundos) {
+function esperar(
+  milisegundos
+) {
 
   return new Promise(
     function(resolve) {
@@ -1277,7 +1643,9 @@ function mostrarResultado(
 ) {
 
   const elemento =
-    document.getElementById("resultado");
+    document.getElementById(
+      "resultado"
+    );
 
 
   elemento.className =
@@ -1289,13 +1657,17 @@ function mostrarResultado(
     contenido;
 
 
-  if (tipo === "oculto") {
+  if (
+    tipo === "oculto"
+  ) {
 
     elemento.classList.add(
       "oculto"
     );
 
-  } else {
+  }
+
+  else {
 
     elemento.classList.remove(
       "oculto"
@@ -1307,13 +1679,15 @@ function mostrarResultado(
 
 
 /* =========================================================
-   MOSTRAR BOTÓN CONTINUAR
+   MOSTRAR CONTINUAR
 ========================================================= */
 
 function mostrarContinuar() {
 
   document
-    .getElementById("botonContinuar")
+    .getElementById(
+      "botonContinuar"
+    )
     .classList.remove(
       "oculto"
     );
@@ -1322,13 +1696,15 @@ function mostrarContinuar() {
 
 
 /* =========================================================
-   OCULTAR BOTÓN CONTINUAR
+   OCULTAR CONTINUAR
 ========================================================= */
 
 function ocultarContinuar() {
 
   document
-    .getElementById("botonContinuar")
+    .getElementById(
+      "botonContinuar"
+    )
     .classList.add(
       "oculto"
     );
@@ -1340,14 +1716,20 @@ function ocultarContinuar() {
    HTML SEGURO
 ========================================================= */
 
-function escaparHTML(texto) {
+function escaparHTML(
+  texto
+) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.textContent =
-    String(texto || "");
+    String(
+      texto || ""
+    );
 
 
   return div.innerHTML;
