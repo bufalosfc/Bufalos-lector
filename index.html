@@ -3,14 +3,21 @@
 <html>
 <head>
   <base target="_top">
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <title>BÚFALOS FC - Lector QR</title>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
 
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -156,9 +163,6 @@
       font-weight: bold;
     }
 
-    iframe {
-      display: none;
-    }
   </style>
 
 </head>
@@ -171,129 +175,114 @@
 
   <div class="panel">
 
-```
-<label for="tipo">
-  Tipo de registro
-</label>
+    <label for="tipo">
+      Tipo de registro
+    </label>
 
-<select id="tipo">
-  <option value="PREASISTENCIA">PREASISTENCIA</option>
-  <option value="ASISTENCIA">ASISTENCIA</option>
-</select>
+    <select id="tipo">
 
-<label for="actividad">
-  Actividad
-</label>
+      <option value="PREASISTENCIA">
+        PREASISTENCIA
+      </option>
 
-<input
-  type="text"
-  id="actividad"
-  value="Entrenamiento"
-  placeholder="Nombre de la actividad"
->
+      <option value="ASISTENCIA">
+        ASISTENCIA
+      </option>
 
-<button
-  class="btn-iniciar"
-  id="btnIniciar"
-  onclick="iniciarLector()">
-  📷 INICIAR LECTOR
-</button>
+    </select>
 
-<button
-  class="btn-detener"
-  id="btnDetener"
-  onclick="detenerLector()"
-  disabled>
-  ⛔ DETENER LECTOR
-</button>
-```
+
+    <label for="actividad">
+      Actividad
+    </label>
+
+    <input
+      type="text"
+      id="actividad"
+      value="Entrenamiento"
+      placeholder="Nombre de la actividad"
+    >
+
+
+    <button
+      class="btn-iniciar"
+      id="btnIniciar"
+      onclick="iniciarLector()">
+
+      📷 INICIAR LECTOR
+
+    </button>
+
+
+    <button
+      class="btn-detener"
+      id="btnDetener"
+      onclick="detenerLector()"
+      disabled>
+
+      ⛔ DETENER LECTOR
+
+    </button>
 
   </div>
+
 
   <div class="panel">
 
-```
-<div id="reader"></div>
+    <div id="reader"></div>
 
-<div
-  id="estadoLector"
-  class="estado">
-  🔴 LECTOR DETENIDO
-</div>
+    <div
+      id="estadoLector"
+      class="estado">
 
-<div
-  id="contador"
-  class="contador">
-  Registros enviados: 0
-</div>
-```
+      🔴 LECTOR DETENIDO
+
+    </div>
+
+
+    <div
+      id="contador"
+      class="contador">
+
+      Registros confirmados: 0
+
+    </div>
 
   </div>
+
 
   <div
     id="resultado"
     class="resultado oculto">
   </div>
 
+
   <div
     id="botonContinuar"
     class="oculto">
 
-```
-<button
-  class="btn-continuar"
-  onclick="continuarSiguiente()">
-  🟢 CONTINUAR CON EL SIGUIENTE CARNET
-</button>
-```
+    <button
+      class="btn-continuar"
+      onclick="continuarSiguiente()">
+
+      🟢 CONTINUAR CON EL SIGUIENTE CARNET
+
+    </button>
 
   </div>
 
 </div>
 
-<!-- =========================================================
-     FORMULARIO OCULTO PARA ENVIAR A APPS SCRIPT
-========================================================= -->
-
-<iframe
-  name="iframePostHub"
-  id="iframePostHub">
-</iframe>
-
-<form
-  id="formPostHub"
-  method="POST"
-  target="iframePostHub"
-  action="https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec">
-
-<input
- type="hidden"
- name="accion"
- id="postAccion">
-
-<input
- type="hidden"
- name="documento"
- id="postDocumento">
-
-<input
- type="hidden"
- name="tipo"
- id="postTipo">
-
-<input
- type="hidden"
- name="actividad"
- id="postActividad">
-
-<input
- type="hidden"
- name="registradoPor"
- id="postRegistradoPor">
-
-</form>
 
 <script>
+
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+
+const APPS_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec";
+
 
 /* =========================================================
    VARIABLES PRINCIPALES
@@ -303,13 +292,11 @@ let html5QrCode = null;
 
 let lectorActivo = false;
 
-/*
- * TRUE = no puede procesar ningún QR.
- * FALSE = puede procesar un nuevo QR.
- */
 let carnetBloqueado = false;
 
 let escaneosRegistrados = 0;
+
+let contadorJSONP = 0;
 
 
 /* =========================================================
@@ -318,20 +305,21 @@ let escaneosRegistrados = 0;
 
 async function iniciarLector() {
 
-  /*
-   * SI ESTÁ BLOQUEADO, NO HACEMOS NADA.
-   */
   if (carnetBloqueado) {
+
     console.log("LECTOR BLOQUEADO");
+
     return;
+
   }
 
-  /*
-   * SI YA ESTÁ ACTIVO, NO LO VOLVEMOS A INICIAR.
-   */
+
   if (lectorActivo) {
+
     return;
+
   }
+
 
   try {
 
@@ -339,15 +327,10 @@ async function iniciarLector() {
       "🟡 INICIANDO CÁMARA...";
 
 
-    /*
-     * Creamos una nueva instancia.
-     */
-    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode =
+      new Html5Qrcode("reader");
 
 
-    /*
-     * Buscamos cámaras disponibles.
-     */
     const cameras =
       await Html5Qrcode.getCameras();
 
@@ -361,16 +344,10 @@ async function iniciarLector() {
     }
 
 
-    /*
-     * Cámara por defecto.
-     */
     let camaraSeleccionada =
       cameras[0].id;
 
 
-    /*
-     * Intentamos seleccionar la cámara trasera.
-     */
     const camaraTrasera =
       cameras.find(function(camara) {
 
@@ -395,9 +372,6 @@ async function iniciarLector() {
     }
 
 
-    /*
-     * ARRANCAMOS EL LECTOR.
-     */
     await html5QrCode.start(
 
       camaraSeleccionada,
@@ -420,8 +394,8 @@ async function iniciarLector() {
       function(errorMessage) {
 
         /*
-         * Errores normales de lectura:
-         * no hacemos nada.
+         * Errores normales de lectura.
+         * No hacemos nada.
          */
 
       }
@@ -479,12 +453,15 @@ async function iniciarLector() {
 
 
     mostrarResultado(
+
       "❌ " +
       escaparHTML(
         error.message ||
         "Error desconocido."
       ),
+
       "error"
+
     );
 
   }
@@ -540,12 +517,6 @@ async function detenerLector() {
 
 async function procesarQR(decodedText) {
 
-  /*
-   * ESTA ES LA PROTECCIÓN PRINCIPAL.
-   *
-   * Si ya procesamos un carnet,
-   * ignoramos TODOS los siguientes QR.
-   */
   if (carnetBloqueado) {
 
     console.log(
@@ -562,14 +533,14 @@ async function procesarQR(decodedText) {
 
 
   if (!documento) {
+
     return;
+
   }
 
 
   /*
    * BLOQUEAMOS INMEDIATAMENTE.
-   *
-   * Esto ocurre ANTES de cualquier envío.
    */
   carnetBloqueado = true;
 
@@ -592,9 +563,6 @@ async function procesarQR(decodedText) {
   );
 
 
-  /*
-   * Mostramos detección.
-   */
   mostrarResultado(
 
     "🔎" +
@@ -619,18 +587,9 @@ async function procesarQR(decodedText) {
     "🟡 CARNET DETECTADO — DETENIENDO LECTOR";
 
 
-  /*
-   * APAGAMOS LA CÁMARA.
-   *
-   * No solamente ignoramos el QR:
-   * detenemos físicamente html5-qrcode.
-   */
   await detenerCamara();
 
 
-  /*
-   * Tomamos los datos.
-   */
   const tipo =
     document.getElementById("tipo").value;
 
@@ -641,7 +600,7 @@ async function procesarQR(decodedText) {
 
 
   /*
-   * ENVIAMOS UNA SOLA VEZ.
+   * AHORA ESPERAMOS LA RESPUESTA REAL.
    */
   enviarRegistro(
     documento,
@@ -699,7 +658,7 @@ async function detenerCamara() {
 
 
 /* =========================================================
-   ENVIAR REGISTRO
+   ENVIAR REGISTRO Y RECIBIR RESPUESTA
 ========================================================= */
 
 function enviarRegistro(
@@ -708,67 +667,303 @@ function enviarRegistro(
   actividad
 ) {
 
-  try {
+  console.log(
+    "ENVIANDO AL SISTEMA BÚFALOS FC:",
+    documento
+  );
+
+
+  mostrarResultado(
+
+    "📤" +
+
+    "<div class='jugador'>" +
+    "PROCESANDO REGISTRO" +
+    "</div>" +
+
+    "Esperando confirmación del sistema...",
+
+    "diagnostico"
+
+  );
+
+
+  contadorJSONP++;
+
+
+  const callback =
+    "bufalosRespuesta_" +
+    Date.now() +
+    "_" +
+    contadorJSONP;
+
+
+  let terminado = false;
+
+
+  /*
+   * Creamos la función callback global.
+   */
+  window[callback] = function(respuesta) {
+
+    if (terminado) {
+
+      return;
+
+    }
+
+
+    terminado = true;
+
 
     console.log(
-      "ENVIANDO AL SISTEMA BÚFALOS FC:",
-      documento
+      "RESPUESTA RECIBIDA:",
+      respuesta
     );
 
 
-    /*
-     * Cargamos el formulario.
-     */
-    document.getElementById("postAccion").value =
-      "registrarAsistenciaQR";
+    try {
+
+      if (!respuesta) {
+
+        mostrarErrorRespuesta();
+
+        return;
+
+      }
 
 
-    document.getElementById("postDocumento").value =
-      documento;
+      procesarRespuestaServidor(
+        respuesta,
+        documento,
+        tipo
+      );
+
+    } finally {
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    }
+
+  };
 
 
-    document.getElementById("postTipo").value =
-      tipo;
+  /*
+   * Creamos el script JSONP.
+   */
+  const script =
+    document.createElement("script");
 
 
-    document.getElementById("postActividad").value =
-      actividad;
+  script.src =
+    APPS_SCRIPT_URL +
+
+    "?accion=registrarAsistenciaQR" +
+
+    "&documento=" +
+    encodeURIComponent(documento) +
+
+    "&tipo=" +
+    encodeURIComponent(tipo) +
+
+    "&actividad=" +
+    encodeURIComponent(actividad) +
+
+    "&registradoPor=" +
+    encodeURIComponent("Hub QR") +
+
+    "&callback=" +
+    encodeURIComponent(callback) +
+
+    "&_=" +
+    Date.now();
 
 
-    document.getElementById("postRegistradoPor").value =
-      "Hub QR";
+  /*
+   * Error de conexión.
+   */
+  script.onerror = function() {
+
+    if (terminado) {
+
+      return;
+
+    }
 
 
-    /*
-     * UN ÚNICO ENVÍO.
-     */
-    document.getElementById("formPostHub").submit();
+    terminado = true;
 
 
-    /*
-     * Mostramos confirmación de envío.
-     *
-     * No decimos todavía "registrado",
-     * porque el formulario oculto no nos permite
-     * leer directamente la respuesta de Apps Script.
-     */
+    console.error(
+      "ERROR RECIBIENDO RESPUESTA DEL SERVIDOR"
+    );
+
+
     mostrarResultado(
 
-      "📤" +
+      "❌" +
 
       "<div class='jugador'>" +
-      "REGISTRO ENVIADO" +
+      "NO SE RECIBIÓ CONFIRMACIÓN" +
       "</div>" +
+
+      "El registro pudo haberse enviado," +
+
+      "<br>" +
+
+      "pero el navegador no recibió la respuesta del sistema.",
+
+      "error"
+
+    );
+
+
+    mostrarContinuar();
+
+
+    limpiarJSONP(
+      callback,
+      script
+    );
+
+  };
+
+
+  /*
+   * Seguridad: timeout.
+   */
+  const temporizador =
+    setTimeout(function() {
+
+      if (terminado) {
+
+        return;
+
+      }
+
+
+      terminado = true;
+
+
+      console.error(
+        "TIEMPO DE ESPERA AGOTADO"
+      );
+
+
+      mostrarResultado(
+
+        "⚠️" +
+
+        "<div class='jugador'>" +
+        "SIN CONFIRMACIÓN" +
+        "</div>" +
+
+        "El sistema tardó demasiado en responder." +
+
+        "<br><br>" +
+
+        "No se realizará otro escaneo hasta continuar.",
+
+        "error"
+
+      );
+
+
+      mostrarContinuar();
+
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    }, 15000);
+
+
+  /*
+   * Guardamos el timeout en el script.
+   */
+  script._bufalosTimeout =
+    temporizador;
+
+
+  document.body.appendChild(script);
+
+}
+
+
+/* =========================================================
+   PROCESAR RESPUESTA DEL SERVIDOR
+========================================================= */
+
+function procesarRespuestaServidor(
+  respuesta,
+  documento,
+  tipo
+) {
+
+  const estado =
+    String(
+      respuesta.estado || ""
+    ).toUpperCase();
+
+
+  /*
+   * REGISTRO NUEVO
+   */
+  if (
+    respuesta.ok === true &&
+    estado === "REGISTRADO"
+  ) {
+
+    escaneosRegistrados++;
+
+    document.getElementById("contador").innerHTML =
+      "Registros confirmados: " +
+      escaneosRegistrados;
+
+
+    const jugador =
+      respuesta.jugador || {};
+
+
+    const nombre =
+      jugador.nombre ||
+      respuesta.nombre ||
+      "";
+
+
+    mostrarResultado(
+
+      "🟢" +
+
+      "<div class='jugador'>" +
 
       (
         tipo === "PREASISTENCIA"
-          ? "PREASISTENCIA ENVIADA"
-          : "ASISTENCIA ENVIADA"
+          ? "PREASISTENCIA REGISTRADA"
+          : "ASISTENCIA REGISTRADA"
       ) +
+
+      "</div>" +
+
+      (
+        nombre
+          ? "<strong>" +
+            escaparHTML(nombre) +
+            "</strong><br><br>"
+          : ""
+      ) +
+
+      "<strong>Documento:</strong> " +
+      escaparHTML(documento) +
 
       "<br><br>" +
 
-      "Enviado al sistema BÚFALOS FC." +
+      "El sistema BÚFALOS FC confirmó el registro." +
 
       "<br><br>" +
 
@@ -778,42 +973,110 @@ function enviarRegistro(
 
       "No se realizará otro escaneo hasta continuar.",
 
-      "diagnostico"
+      "exito"
 
     );
 
 
-    /*
-     * Mostramos botón.
-     */
     mostrarContinuar();
 
 
-    console.log(
-      "ENVÍO REALIZADO. ESPERANDO CONTINUAR."
-    );
+    return;
+
+  }
 
 
-  } catch(error) {
+  /*
+   * DUPLICADO
+   */
+  if (
+    respuesta.duplicado === true ||
+    estado === "DUPLICADO"
+  ) {
 
-    console.error(
-      "ERROR ENVIANDO REGISTRO:",
-      error
-    );
+    const nombre =
+      respuesta.nombre ||
+      (
+        respuesta.jugador &&
+        respuesta.jugador.nombre
+      ) ||
+      "";
 
 
     mostrarResultado(
 
-      "❌" +
+      "🟡" +
 
       "<div class='jugador'>" +
-      "ERROR AL ENVIAR" +
+      "YA REGISTRADO" +
       "</div>" +
 
+      (
+        nombre
+          ? "<strong>" +
+            escaparHTML(nombre) +
+            "</strong><br><br>"
+          : ""
+      ) +
+
       escaparHTML(
-        error.message ||
-        "Error desconocido."
-      ),
+        respuesta.mensaje ||
+        "Este jugador ya tiene registrado este evento."
+      ) +
+
+      "<br><br>" +
+
+      "<strong>El lector está detenido.</strong>" +
+
+      "<br>" +
+
+      "No se realizará otro escaneo hasta continuar.",
+
+      "duplicado"
+
+    );
+
+
+    mostrarContinuar();
+
+
+    return;
+
+  }
+
+
+  /*
+   * JUGADOR NO ENCONTRADO
+   */
+  if (
+    estado === "NO_ENCONTRADO"
+  ) {
+
+    mostrarResultado(
+
+      "🔴" +
+
+      "<div class='jugador'>" +
+      "JUGADOR NO ENCONTRADO" +
+      "</div>" +
+
+      "<strong>Documento:</strong> " +
+      escaparHTML(documento) +
+
+      "<br><br>" +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "No existe un jugador con este documento."
+      ) +
+
+      "<br><br>" +
+
+      "<strong>El lector está detenido.</strong>" +
+
+      "<br>" +
+
+      "No se realizará otro escaneo hasta continuar.",
 
       "error"
 
@@ -821,6 +1084,130 @@ function enviarRegistro(
 
 
     mostrarContinuar();
+
+
+    return;
+
+  }
+
+
+  /*
+   * CUALQUIER OTRO ERROR
+   */
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "ERROR EN EL REGISTRO" +
+    "</div>" +
+
+    escaparHTML(
+      respuesta.mensaje ||
+      "El sistema devolvió una respuesta inesperada."
+    ) +
+
+    "<br><br>" +
+
+    "<strong>El lector está detenido.</strong>" +
+
+    "<br>" +
+
+    "No se realizará otro escaneo hasta continuar.",
+
+    "error"
+
+  );
+
+
+  mostrarContinuar();
+
+}
+
+
+/* =========================================================
+   ERROR DE RESPUESTA
+========================================================= */
+
+function mostrarErrorRespuesta() {
+
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "NO SE RECIBIÓ CONFIRMACIÓN" +
+    "</div>" +
+
+    "El servidor no devolvió una respuesta válida." +
+
+    "<br><br>" +
+
+    "<strong>El lector está detenido.</strong>" +
+
+    "<br>" +
+
+    "No se realizará otro escaneo hasta continuar.",
+
+    "error"
+
+  );
+
+
+  mostrarContinuar();
+
+}
+
+
+/* =========================================================
+   LIMPIAR JSONP
+========================================================= */
+
+function limpiarJSONP(
+  callback,
+  script
+) {
+
+  try {
+
+    if (
+      script &&
+      script._bufalosTimeout
+    ) {
+
+      clearTimeout(
+        script._bufalosTimeout
+      );
+
+    }
+
+  } catch(error) {}
+
+
+  try {
+
+    if (
+      script &&
+      script.parentNode
+    ) {
+
+      script.parentNode.removeChild(
+        script
+      );
+
+    }
+
+  } catch(error) {}
+
+
+  try {
+
+    delete window[callback];
+
+  } catch(error) {
+
+    window[callback] =
+      undefined;
 
   }
 
@@ -846,54 +1233,25 @@ async function continuarSiguiente() {
   );
 
 
-  /*
-   * Ocultamos botón.
-   */
   ocultarContinuar();
 
 
-  /*
-   * Limpiamos resultado.
-   */
   mostrarResultado(
     "",
     "oculto"
   );
 
 
-  /*
-   * DESBLOQUEAMOS.
-   *
-   * ESTA ES LA ÚNICA PARTE DEL CÓDIGO
-   * QUE VUELVE A PERMITIR OTRO QR.
-   */
   carnetBloqueado = false;
-
-
-  /*
-   * Limpiamos formulario.
-   */
-  document.getElementById("postDocumento").value =
-    "";
-
-  document.getElementById("postAccion").value =
-    "";
 
 
   document.getElementById("estadoLector").innerHTML =
     "🟡 PREPARANDO SIGUIENTE CARNET...";
 
 
-  /*
-   * Pequeña pausa para asegurarnos
-   * de que la cámara anterior quedó detenida.
-   */
   await esperar(500);
 
 
-  /*
-   * Iniciamos nuevamente.
-   */
   await iniciarLector();
 
 }
@@ -957,7 +1315,7 @@ function mostrarResultado(
 
 
 /* =========================================================
-   MOSTRAR BOTÓN CONTINUAR
+   MOSTRAR CONTINUAR
 ========================================================= */
 
 function mostrarContinuar() {
@@ -972,7 +1330,7 @@ function mostrarContinuar() {
 
 
 /* =========================================================
-   OCULTAR BOTÓN CONTINUAR
+   OCULTAR CONTINUAR
 ========================================================= */
 
 function ocultarContinuar() {
@@ -982,22 +1340,6 @@ function ocultarContinuar() {
     .classList.add(
       "oculto"
     );
-
-}
-
-
-/* =========================================================
-   CONTADOR
-========================================================= */
-
-function incrementarContador() {
-
-  escaneosRegistrados++;
-
-
-  document.getElementById("contador").innerHTML =
-    "Registros enviados: " +
-    escaneosRegistrados;
 
 }
 
