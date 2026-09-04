@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <base target="_top">
 
   <meta charset="UTF-8">
 
-<meta name="viewport"
-     content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <title>BÚFALOS FC - Lector QR</title>
 
@@ -48,27 +47,20 @@
       box-shadow: 0 3px 12px rgba(0,0,0,0.10);
     }
 
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    input,
-    select,
     button {
       width: 100%;
       padding: 13px;
       font-size: 16px;
       border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 12px;
-    }
-
-    button {
       border: none;
+      margin-bottom: 12px;
       cursor: pointer;
       font-weight: bold;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .btn-iniciar {
@@ -81,9 +73,14 @@
       color: white;
     }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+    .btn-cambiar {
+      background: #0d6efd;
+      color: white;
+    }
+
+    .btn-secundario {
+      background: #6c757d;
+      color: white;
     }
 
     #reader {
@@ -99,6 +96,38 @@
       border-radius: 8px;
       margin-top: 10px;
       background: #eee;
+    }
+
+    .actividad {
+      border: 2px solid #198754;
+      background: #f1f8f4;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 15px;
+    }
+
+    .actividad-titulo {
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 14px;
+    }
+
+    .actividad-dato {
+      padding: 7px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .actividad-dato:last-child {
+      border-bottom: none;
+    }
+
+    .actividad-label {
+      font-weight: bold;
+    }
+
+    .actividad-valor {
+      margin-left: 5px;
     }
 
     .resultado {
@@ -143,6 +172,25 @@
       margin-top: 10px;
     }
 
+    .modo {
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #e9ecef;
+    }
+
+    .modo-actividad {
+      background: #cff4fc;
+      color: #055160;
+    }
+
+    .modo-jugadores {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
     .oculto {
       display: none !important;
     }
@@ -159,83 +207,137 @@
 
   <div class="panel">
 
-```
-<label for="tipo">
-  Tipo de registro
-</label>
+    <div
+      id="modoLector"
+      class="modo modo-actividad">
 
-<select id="tipo">
+      📋 PRIMERO ESCANEE EL QR GENERAL DE LA ACTIVIDAD
 
-  <option value="PREASISTENCIA">
-    PREASISTENCIA
-  </option>
-
-  <option value="ASISTENCIA">
-    ASISTENCIA
-  </option>
-
-</select>
+    </div>
 
 
-<label for="actividad">
-  Actividad
-</label>
+    <div
+      id="actividadSeleccionada"
+      class="actividad oculto">
 
-<input
-  type="text"
-  id="actividad"
-  value="Entrenamiento"
-  placeholder="Nombre de la actividad"
->
+      <div class="actividad-titulo">
+        ✅ ACTIVIDAD SELECCIONADA
+      </div>
+
+      <div class="actividad-dato">
+        <span class="actividad-label">
+          📅 Fecha:
+        </span>
+
+        <span
+          id="actividadFecha"
+          class="actividad-valor">
+        </span>
+      </div>
+
+      <div class="actividad-dato">
+        <span class="actividad-label">
+          🕐 Hora:
+        </span>
+
+        <span
+          id="actividadHora"
+          class="actividad-valor">
+        </span>
+      </div>
+
+      <div class="actividad-dato">
+        <span class="actividad-label">
+          ⚽ Actividad:
+        </span>
+
+        <span
+          id="actividadNombre"
+          class="actividad-valor">
+        </span>
+      </div>
+
+      <div class="actividad-dato">
+        <span class="actividad-label">
+          📌 Tipo:
+        </span>
+
+        <span
+          id="actividadTipo"
+          class="actividad-valor">
+        </span>
+      </div>
+
+      <div class="actividad-dato">
+        <span class="actividad-label">
+          🔵 Estado:
+        </span>
+
+        <span
+          id="actividadEstado"
+          class="actividad-valor">
+        </span>
+      </div>
+
+    </div>
 
 
-<button
-  class="btn-iniciar"
-  id="btnIniciar"
-  onclick="iniciarLector()">
+    <button
+      class="btn-cambiar oculto"
+      id="btnCambiarActividad"
+      onclick="cambiarActividad()">
 
-  📷 INICIAR LECTOR
+      🔄 CAMBIAR ACTIVIDAD
 
-</button>
+    </button>
 
 
-<button
-  class="btn-detener"
-  id="btnDetener"
-  onclick="detenerLector()"
-  disabled>
+    <button
+      class="btn-iniciar"
+      id="btnIniciar"
+      onclick="iniciarLector()">
 
-  ⛔ DETENER LECTOR
+      📷 INICIAR LECTOR
 
-</button>
-```
+    </button>
+
+
+    <button
+      class="btn-detener"
+      id="btnDetener"
+      onclick="detenerLector()"
+      disabled>
+
+      ⛔ DETENER LECTOR
+
+    </button>
 
   </div>
+
 
   <div class="panel">
 
-```
-<div id="reader"></div>
+    <div id="reader"></div>
 
-<div
-  id="estadoLector"
-  class="estado">
+    <div
+      id="estadoLector"
+      class="estado">
 
-  🔴 LECTOR DETENIDO
+      🔴 LECTOR DETENIDO
 
-</div>
+    </div>
 
 
-<div
-  id="contador"
-  class="contador">
+    <div
+      id="contador"
+      class="contador">
 
-  Registros confirmados: 0
+      Registros confirmados: 0
 
-</div>
-```
+    </div>
 
   </div>
+
 
   <div
     id="resultado"
@@ -243,6 +345,7 @@
   </div>
 
 </div>
+
 
 <script>
 
@@ -254,11 +357,6 @@ const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbwMw4Lbn8xo9JqZCpd7wJ_6cwNy-nswbErwbhkPWK2y26_ZwtVYZ9p1n2rrHsf60hs/exec";
 
 
-/*
- * Tiempo de espera entre un resultado y el siguiente escaneo.
- *
- * 2000 = 2 segundos
- */
 const TIEMPO_ENTRE_ESCANEOS = 2000;
 
 
@@ -275,6 +373,24 @@ let carnetBloqueado = false;
 let escaneosRegistrados = 0;
 
 let contadorJSONP = 0;
+
+
+/*
+ * Actividad actualmente seleccionada.
+ *
+ * Cuando es null, el lector está esperando
+ * un QR GENERAL.
+ */
+let actividadSeleccionada = null;
+
+
+/*
+ * Modo actual del lector:
+ *
+ * ACTIVIDAD = esperando QR GENERAL
+ * JUGADORES = esperando carnets
+ */
+let modoLector = "ACTIVIDAD";
 
 
 /* =========================================================
@@ -296,10 +412,6 @@ async function iniciarLector() {
       "🟡 INICIANDO CÁMARA...";
 
 
-    /*
-     * Creamos una nueva instancia solamente
-     * cuando realmente iniciamos el lector.
-     */
     html5QrCode =
       new Html5Qrcode("reader");
 
@@ -317,9 +429,6 @@ async function iniciarLector() {
     }
 
 
-    /*
-     * Buscamos preferiblemente la cámara trasera.
-     */
     let camaraSeleccionada =
       cameras[0].id;
 
@@ -391,8 +500,7 @@ async function iniciarLector() {
       false;
 
 
-    document.getElementById("estadoLector").innerHTML =
-      "🟢 LECTOR ACTIVO — ESCANEE UN CARNET";
+    actualizarEstadoInicial();
 
 
     mostrarResultado(
@@ -440,6 +548,59 @@ async function iniciarLector() {
       "error"
 
     );
+
+  }
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR ESTADO INICIAL
+========================================================= */
+
+function actualizarEstadoInicial() {
+
+  if (!lectorActivo) {
+
+    return;
+
+  }
+
+
+  if (actividadSeleccionada) {
+
+    document.getElementById("modoLector").className =
+      "modo modo-jugadores";
+
+
+    document.getElementById("modoLector").innerHTML =
+      "👤 LECTOR DE CARNETS — ESCANEE UN JUGADOR";
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE UN CARNET";
+
+
+    document.getElementById("btnCambiarActividad")
+      .classList.remove("oculto");
+
+
+  } else {
+
+    document.getElementById("modoLector").className =
+      "modo modo-actividad";
+
+
+    document.getElementById("modoLector").innerHTML =
+      "📋 ESCANEE EL QR GENERAL DE LA ACTIVIDAD";
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE EL QR GENERAL";
+
+
+    document.getElementById("btnCambiarActividad")
+      .classList.add("oculto");
 
   }
 
@@ -500,19 +661,15 @@ async function detenerLector() {
 
 
 /* =========================================================
-   PROCESAR QR
+   PROCESAR CUALQUIER QR
 ========================================================= */
 
 function procesarQR(decodedText) {
 
-  /*
-   * SI ESTAMOS PROCESANDO OTRO CARNET,
-   * IGNORAMOS CUALQUIER NUEVA LECTURA.
-   */
   if (carnetBloqueado) {
 
     console.log(
-      "QR IGNORADO: PROCESANDO CARNET ANTERIOR"
+      "QR IGNORADO: PROCESANDO LECTURA ANTERIOR"
     );
 
     return;
@@ -520,10 +677,6 @@ function procesarQR(decodedText) {
   }
 
 
-  /*
-   * SI EL LECTOR NO ESTÁ ACTIVO,
-   * NO PROCESAMOS.
-   */
   if (!lectorActivo) {
 
     return;
@@ -531,11 +684,11 @@ function procesarQR(decodedText) {
   }
 
 
-  const documento =
+  const texto =
     String(decodedText || "").trim();
 
 
-  if (!documento) {
+  if (!texto) {
 
     return;
 
@@ -544,13 +697,6 @@ function procesarQR(decodedText) {
 
   /*
    * BLOQUEAMOS INMEDIATAMENTE.
-   *
-   * MUY IMPORTANTE:
-   * NO DETENEMOS LA CÁMARA.
-   *
-   * La cámara seguirá encendida,
-   * pero ignoraremos nuevos QR
-   * mientras esperamos la respuesta.
    */
   carnetBloqueado = true;
 
@@ -561,11 +707,12 @@ function procesarQR(decodedText) {
 
   console.log(
     "QR DETECTADO:",
-    documento
+    texto
   );
 
   console.log(
-    "LECTOR CONTINUO: CARNET BLOQUEADO TEMPORALMENTE"
+    "MODO:",
+    modoLector
   );
 
   console.log(
@@ -573,20 +720,739 @@ function procesarQR(decodedText) {
   );
 
 
+  /*
+   * =======================================================
+   * MODO ACTIVIDAD
+   * =======================================================
+   *
+   * El primer QR debe ser el QR GENERAL.
+   */
+
+  if (!actividadSeleccionada) {
+
+    const actividadQR =
+      extraerActividadDesdeQR(texto);
+
+
+    if (!actividadQR) {
+
+      mostrarResultado(
+
+        "⚠️" +
+
+        "<div class='jugador'>" +
+        "QR NO VÁLIDO" +
+        "</div>" +
+
+        "Primero debe escanear el " +
+        "<strong>QR GENERAL DE LA ACTIVIDAD</strong>.",
+
+        "error"
+
+      );
+
+
+      prepararSiguienteEscaneoActividad();
+
+      return;
+
+    }
+
+
+    mostrarResultado(
+
+      "🔎" +
+
+      "<div class='jugador'>" +
+      "QR GENERAL DETECTADO" +
+      "</div>" +
+
+      "<strong>ActividadID:</strong> " +
+
+      escaparHTML(
+        actividadQR.id
+      ) +
+
+      "<br><br>" +
+
+      "⏳ Consultando actividad...",
+
+      "diagnostico"
+
+    );
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟡 CONSULTANDO ACTIVIDAD...";
+
+
+    procesarQRActividad(
+      actividadQR.id
+    );
+
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * MODO JUGADORES
+   * =======================================================
+   *
+   * Desde este punto cualquier QR válido
+   * se interpreta como Documento.
+   */
+
+  registrarJugadorEnActividad(texto);
+
+}
+
+
+/* =========================================================
+   EXTRAER ACTIVIDAD DESDE QR GENERAL
+========================================================= */
+
+function extraerActividadDesdeQR(texto) {
+
+  try {
+
+    const url =
+      new URL(texto);
+
+
+    const accion =
+      String(
+        url.searchParams.get("accion") || ""
+      ).trim();
+
+
+    const id =
+      String(
+        url.searchParams.get("id") || ""
+      ).trim();
+
+
+    if (
+      accion !== "actividadQR" ||
+      !id
+    ) {
+
+      return null;
+
+    }
+
+
+    return {
+      id: id
+    };
+
+  } catch(error) {
+
+    /*
+     * Si el QR no contiene una URL válida,
+     * no es un QR GENERAL.
+     */
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   CONSULTAR ACTIVIDAD
+========================================================= */
+
+function procesarQRActividad(
+  actividadId
+) {
+
+  console.log(
+    "CONSULTANDO ACTIVIDAD:",
+    actividadId
+  );
+
+
+  contadorJSONP++;
+
+
+  const callback =
+    "bufalosActividad_" +
+    Date.now() +
+    "_" +
+    contadorJSONP;
+
+
+  let terminado = false;
+
+
+  const script =
+    document.createElement("script");
+
+
+  window[callback] =
+    function(respuesta) {
+
+      if (terminado) {
+
+        return;
+
+      }
+
+
+      terminado = true;
+
+
+      console.log(
+        "RESPUESTA ACTIVIDAD:",
+        respuesta
+      );
+
+
+      try {
+
+        if (!respuesta) {
+
+          mostrarErrorActividad();
+
+          return;
+
+        }
+
+
+        procesarRespuestaActividad(
+          respuesta
+        );
+
+      } finally {
+
+        limpiarJSONP(
+          callback,
+          script
+        );
+
+      }
+
+    };
+
+
+  script.src =
+    APPS_SCRIPT_URL +
+
+    "?accion=actividadQR" +
+
+    "&id=" +
+    encodeURIComponent(actividadId) +
+
+    "&callback=" +
+    encodeURIComponent(callback) +
+
+    "&_=" +
+    Date.now();
+
+
+  script.onerror =
+    function() {
+
+      if (terminado) {
+
+        return;
+
+      }
+
+
+      terminado = true;
+
+
+      console.error(
+        "ERROR CONSULTANDO ACTIVIDAD"
+      );
+
+
+      mostrarResultado(
+
+        "❌" +
+
+        "<div class='jugador'>" +
+        "NO SE PUDO CONSULTAR LA ACTIVIDAD" +
+        "</div>" +
+
+        "No se recibió confirmación del sistema.",
+
+        "error"
+
+      );
+
+
+      document.getElementById("estadoLector").innerHTML =
+        "🔴 ERROR CONSULTANDO ACTIVIDAD";
+
+
+      detenerLector();
+
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    };
+
+
+  const temporizador =
+    setTimeout(function() {
+
+      if (terminado) {
+
+        return;
+
+      }
+
+
+      terminado = true;
+
+
+      console.error(
+        "TIMEOUT CONSULTANDO ACTIVIDAD"
+      );
+
+
+      mostrarResultado(
+
+        "⚠️" +
+
+        "<div class='jugador'>" +
+        "SIN RESPUESTA" +
+        "</div>" +
+
+        "El sistema tardó demasiado en responder." +
+
+        "<br><br>" +
+
+        "Por seguridad, el lector fue detenido.",
+
+        "error"
+
+      );
+
+
+      detenerLector();
+
+
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    }, 15000);
+
+
+  script._bufalosTimeout =
+    temporizador;
+
+
+  document.body.appendChild(script);
+
+}
+
+
+/* =========================================================
+   PROCESAR RESPUESTA ACTIVIDAD
+========================================================= */
+
+function procesarRespuestaActividad(
+  respuesta
+) {
+
+  const estado =
+    String(
+      respuesta.estado || ""
+    ).toUpperCase();
+
+
+  /*
+   * =======================================================
+   * ACTIVIDAD ENCONTRADA
+   * =======================================================
+   */
+
+  if (
+    respuesta.ok === true &&
+    (
+      estado === "OK" ||
+      estado === "ACTIVA" ||
+      estado === "ENCONTRADA" ||
+      respuesta.actividad
+    )
+  ) {
+
+    seleccionarActividad(
+      respuesta
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * ACTIVIDAD NO ENCONTRADA
+   * =======================================================
+   */
+
+  if (
+    estado === "NO_ENCONTRADO" ||
+    estado === "NO ENCONTRADA"
+  ) {
+
+    mostrarResultado(
+
+      "🔴" +
+
+      "<div class='jugador'>" +
+      "ACTIVIDAD NO ENCONTRADA" +
+      "</div>" +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "No existe la actividad indicada por este QR."
+      ),
+
+      "error"
+
+    );
+
+
+    prepararSiguienteEscaneoActividad();
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * ACTIVIDAD CERRADA / INACTIVA
+   * =======================================================
+   */
+
+  if (
+    estado === "CERRADA" ||
+    estado === "INACTIVA" ||
+    estado === "FINALIZADA"
+  ) {
+
+    mostrarResultado(
+
+      "⚠️" +
+
+      "<div class='jugador'>" +
+      "ACTIVIDAD NO DISPONIBLE" +
+      "</div>" +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "La actividad no está disponible para registrar asistencia."
+      ),
+
+      "duplicado"
+
+    );
+
+
+    prepararSiguienteEscaneoActividad();
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * ERROR DESCONOCIDO
+   * =======================================================
+   */
+
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "ERROR CONSULTANDO ACTIVIDAD" +
+    "</div>" +
+
+    escaparHTML(
+      respuesta.mensaje ||
+      "El sistema devolvió una respuesta inesperada."
+    ),
+
+    "error"
+
+  );
+
+
+  detenerLector();
+
+}
+
+
+/* =========================================================
+   SELECCIONAR ACTIVIDAD
+========================================================= */
+
+function seleccionarActividad(
+  respuesta
+) {
+
+  const actividad =
+    respuesta.actividad || {};
+
+
+  actividadSeleccionada = {
+
+    actividadId:
+      String(
+        respuesta.actividadId ||
+        actividad.actividadId ||
+        respuesta.id ||
+        actividad.id ||
+        ""
+      ).trim(),
+
+    actividad:
+      String(
+        respuesta.nombre ||
+        respuesta.actividadNombre ||
+        actividad.nombre ||
+        actividad.actividad ||
+        respuesta.actividad ||
+        ""
+      ).trim(),
+
+    tipo:
+      String(
+        respuesta.tipo ||
+        actividad.tipo ||
+        ""
+      ).trim(),
+
+    fecha:
+      String(
+        respuesta.fecha ||
+        actividad.fecha ||
+        ""
+      ).trim(),
+
+    hora:
+      String(
+        respuesta.hora ||
+        actividad.hora ||
+        ""
+      ).trim(),
+
+    estado:
+      String(
+        respuesta.estado ||
+        actividad.estado ||
+        "ACTIVA"
+      ).trim()
+
+  };
+
+
+  /*
+   * Si por alguna razón no llegó ActividadID,
+   * detenemos para evitar registros incorrectos.
+   */
+
+  if (!actividadSeleccionada.actividadId) {
+
+    actividadSeleccionada = null;
+
+
+    mostrarResultado(
+
+      "❌" +
+
+      "<div class='jugador'>" +
+      "ACTIVIDAD INVÁLIDA" +
+      "</div>" +
+
+      "El QR fue leído, pero el sistema no devolvió un " +
+      "<strong>ActividadID</strong> válido.",
+
+      "error"
+
+    );
+
+
+    detenerLector();
+
+    return;
+
+  }
+
+
+  modoLector = "JUGADORES";
+
+
+  mostrarActividadSeleccionada();
+
+
+  document.getElementById("btnCambiarActividad")
+    .classList.remove("oculto");
+
+
+  document.getElementById("modoLector").className =
+    "modo modo-jugadores";
+
+
+  document.getElementById("modoLector").innerHTML =
+    "👤 LECTOR DE CARNETS — ACTIVIDAD SELECCIONADA";
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟢 LECTOR ACTIVO — ESCANEE UN CARNET";
+
+
+  mostrarResultado(
+
+    "🟢" +
+
+    "<div class='jugador'>" +
+    "ACTIVIDAD LISTA" +
+    "</div>" +
+
+    (
+      actividadSeleccionada.actividad
+        ? "<strong>" +
+          escaparHTML(
+            actividadSeleccionada.actividad
+          ) +
+          "</strong><br><br>"
+        : ""
+    ) +
+
+    "Ya puede comenzar a escanear los carnets.",
+
+    "exito"
+
+  );
+
+
+  carnetBloqueado = false;
+
+
+  console.log(
+    "ACTIVIDAD SELECCIONADA:",
+    actividadSeleccionada
+  );
+
+}
+
+
+/* =========================================================
+   MOSTRAR ACTIVIDAD SELECCIONADA
+========================================================= */
+
+function mostrarActividadSeleccionada() {
+
+  const panel =
+    document.getElementById(
+      "actividadSeleccionada"
+    );
+
+
+  document.getElementById(
+    "actividadFecha"
+  ).textContent =
+    actividadSeleccionada.fecha || "—";
+
+
+  document.getElementById(
+    "actividadHora"
+  ).textContent =
+    actividadSeleccionada.hora || "—";
+
+
+  document.getElementById(
+    "actividadNombre"
+  ).textContent =
+    actividadSeleccionada.actividad || "—";
+
+
+  document.getElementById(
+    "actividadTipo"
+  ).textContent =
+    actividadSeleccionada.tipo || "—";
+
+
+  document.getElementById(
+    "actividadEstado"
+  ).textContent =
+    actividadSeleccionada.estado || "—";
+
+
+  panel.classList.remove(
+    "oculto"
+  );
+
+}
+
+
+/* =========================================================
+   REGISTRAR JUGADOR EN ACTIVIDAD
+========================================================= */
+
+function registrarJugadorEnActividad(
+  documento
+) {
+
+  if (!actividadSeleccionada) {
+
+    carnetBloqueado = false;
+
+    return;
+
+  }
+
+
+  documento =
+    String(
+      documento || ""
+    ).trim();
+
+
+  if (!documento) {
+
+    carnetBloqueado = false;
+
+    return;
+
+  }
+
+
   mostrarResultado(
 
     "🔎" +
 
     "<div class='jugador'>" +
-    "QR DETECTADO" +
+    "CARNET DETECTADO" +
     "</div>" +
 
     "<strong>Documento:</strong> " +
-    escaparHTML(documento) +
+
+    escaparHTML(
+      documento
+    ) +
 
     "<br><br>" +
 
-    "⏳ Procesando registro...",
+    "⏳ Registrando asistencia...",
 
     "diagnostico"
 
@@ -597,63 +1463,40 @@ function procesarQR(decodedText) {
     "🟡 PROCESANDO CARNET...";
 
 
-  const tipo =
-    document.getElementById("tipo").value;
+  console.log(
+    "REGISTRANDO JUGADOR:",
+    documento
+  );
 
 
-  const actividad =
-    document.getElementById("actividad").value.trim()
-    || "Entrenamiento";
+  console.log(
+    "ACTIVIDAD:",
+    actividadSeleccionada.actividadId
+  );
 
 
-  /*
-   * ENVIAMOS EL REGISTRO.
-   */
-  enviarRegistro(
+  enviarRegistroActividad(
     documento,
-    tipo,
-    actividad
+    actividadSeleccionada.actividadId
   );
 
 }
 
 
 /* =========================================================
-   ENVIAR REGISTRO Y RECIBIR RESPUESTA
+   ENVIAR REGISTRO DE JUGADOR
 ========================================================= */
 
-function enviarRegistro(
+function enviarRegistroActividad(
   documento,
-  tipo,
-  actividad
+  actividadId
 ) {
-
-  console.log(
-    "ENVIANDO AL SISTEMA BÚFALOS FC:",
-    documento
-  );
-
-
-  mostrarResultado(
-
-    "📤" +
-
-    "<div class='jugador'>" +
-    "PROCESANDO REGISTRO" +
-    "</div>" +
-
-    "Esperando confirmación del sistema...",
-
-    "diagnostico"
-
-  );
-
 
   contadorJSONP++;
 
 
   const callback =
-    "bufalosRespuesta_" +
+    "bufalosAsistencia_" +
     Date.now() +
     "_" +
     contadorJSONP;
@@ -662,79 +1505,67 @@ function enviarRegistro(
   let terminado = false;
 
 
-  /*
-   * Creamos la función callback global.
-   */
-  window[callback] = function(respuesta) {
-
-    if (terminado) {
-
-      return;
-
-    }
+  const script =
+    document.createElement("script");
 
 
-    terminado = true;
+  window[callback] =
+    function(respuesta) {
 
-
-    console.log(
-      "RESPUESTA RECIBIDA:",
-      respuesta
-    );
-
-
-    try {
-
-      if (!respuesta) {
-
-        mostrarErrorRespuesta();
+      if (terminado) {
 
         return;
 
       }
 
 
-      procesarRespuestaServidor(
-        respuesta,
-        documento,
-        tipo
+      terminado = true;
+
+
+      console.log(
+        "RESPUESTA ASISTENCIA:",
+        respuesta
       );
 
-    } finally {
 
-      limpiarJSONP(
-        callback,
-        script
-      );
+      try {
 
-    }
+        if (!respuesta) {
 
-  };
+          mostrarErrorRespuesta();
+
+          return;
+
+        }
 
 
-  /*
-   * Creamos el script JSONP.
-   */
-  const script =
-    document.createElement("script");
+        procesarRespuestaAsistencia(
+          respuesta,
+          documento
+        );
+
+      } finally {
+
+        limpiarJSONP(
+          callback,
+          script
+        );
+
+      }
+
+    };
 
 
   script.src =
     APPS_SCRIPT_URL +
 
-    "?accion=registrarAsistenciaQR" +
+    "?accion=registrarAsistenciaActividad" +
 
     "&documento=" +
     encodeURIComponent(documento) +
 
-    "&tipo=" +
-    encodeURIComponent(tipo) +
-
-    "&actividad=" +
-    encodeURIComponent(actividad) +
-
-    "&registradoPor=" +
-    encodeURIComponent("Hub QR") +
+    "&id=" +
+    encodeURIComponent(actividadId) +
 
     "&callback=" +
     encodeURIComponent(callback) +
@@ -743,69 +1574,58 @@ function enviarRegistro(
     Date.now();
 
 
-  /*
-   * Error de conexión.
-   *
-   * En este caso NO desbloqueamos automáticamente,
-   * porque no sabemos si el registro llegó al servidor.
-   */
-  script.onerror = function() {
+  script.onerror =
+    function() {
 
-    if (terminado) {
+      if (terminado) {
 
-      return;
+        return;
 
-    }
+      }
 
 
-    terminado = true;
+      terminado = true;
 
 
-    console.error(
-      "ERROR RECIBIENDO RESPUESTA DEL SERVIDOR"
-    );
+      console.error(
+        "ERROR RECIBIENDO RESPUESTA DEL SERVIDOR"
+      );
 
 
-    mostrarResultado(
+      mostrarResultado(
 
-      "❌" +
+        "❌" +
 
-      "<div class='jugador'>" +
-      "NO SE RECIBIÓ CONFIRMACIÓN" +
-      "</div>" +
+        "<div class='jugador'>" +
+        "NO SE RECIBIÓ CONFIRMACIÓN" +
+        "</div>" +
 
-      "El registro pudo haberse enviado," +
+        "El registro pudo haberse enviado," +
 
-      "<br>" +
+        "<br>" +
 
-      "pero el navegador no recibió la respuesta del sistema.",
+        "pero el navegador no recibió la respuesta del sistema.",
 
-      "error"
+        "error"
 
-    );
-
-
-    document.getElementById("estadoLector").innerHTML =
-      "🔴 LECTOR DETENIDO — REVISE EL REGISTRO";
+      );
 
 
-    /*
-     * Detenemos el lector por seguridad.
-     */
-    detenerLector();
+      document.getElementById("estadoLector").innerHTML =
+        "🔴 LECTOR DETENIDO — REVISE EL REGISTRO";
 
 
-    limpiarJSONP(
-      callback,
-      script
-    );
-
-  };
+      detenerLector();
 
 
-  /*
-   * Timeout de seguridad.
-   */
+      limpiarJSONP(
+        callback,
+        script
+      );
+
+    };
+
+
   const temporizador =
     setTimeout(function() {
 
@@ -858,9 +1678,6 @@ function enviarRegistro(
     }, 15000);
 
 
-  /*
-   * Guardamos el timeout.
-   */
   script._bufalosTimeout =
     temporizador;
 
@@ -871,13 +1688,12 @@ function enviarRegistro(
 
 
 /* =========================================================
-   PROCESAR RESPUESTA DEL SERVIDOR
+   PROCESAR RESPUESTA ASISTENCIA
 ========================================================= */
 
-function procesarRespuestaServidor(
+function procesarRespuestaAsistencia(
   respuesta,
-  documento,
-  tipo
+  documento
 ) {
 
   const estado =
@@ -910,8 +1726,8 @@ function procesarRespuestaServidor(
 
 
     const nombre =
-      jugador.nombre ||
       respuesta.nombre ||
+      jugador.nombre ||
       "";
 
 
@@ -920,13 +1736,7 @@ function procesarRespuestaServidor(
       "🟢" +
 
       "<div class='jugador'>" +
-
-      (
-        tipo === "PREASISTENCIA"
-          ? "PREASISTENCIA REGISTRADA"
-          : "ASISTENCIA REGISTRADA"
-      ) +
-
+      "ASISTENCIA REGISTRADA" +
       "</div>" +
 
       (
@@ -938,9 +1748,22 @@ function procesarRespuestaServidor(
       ) +
 
       "<strong>Documento:</strong> " +
-      escaparHTML(documento) +
+
+      escaparHTML(
+        documento
+      ) +
 
       "<br><br>" +
+
+      (
+        actividadSeleccionada.actividad
+          ? "<strong>Actividad:</strong> " +
+            escaparHTML(
+              actividadSeleccionada.actividad
+            ) +
+            "<br><br>"
+          : ""
+      ) +
 
       "El sistema BÚFALOS FC confirmó el registro.",
 
@@ -949,10 +1772,6 @@ function procesarRespuestaServidor(
     );
 
 
-    /*
-     * ESPERAMOS 2 SEGUNDOS Y VOLVEMOS
-     * AUTOMÁTICAMENTE A ESCANEAR.
-     */
     prepararSiguienteEscaneo();
 
 
@@ -972,12 +1791,13 @@ function procesarRespuestaServidor(
     estado === "DUPLICADO"
   ) {
 
+    const jugador =
+      respuesta.jugador || {};
+
+
     const nombre =
       respuesta.nombre ||
-      (
-        respuesta.jugador &&
-        respuesta.jugador.nombre
-      ) ||
+      jugador.nombre ||
       "";
 
 
@@ -986,7 +1806,7 @@ function procesarRespuestaServidor(
       "🟡" +
 
       "<div class='jugador'>" +
-      "YA REGISTRADO" +
+      "DUPLICADO" +
       "</div>" +
 
       (
@@ -999,7 +1819,7 @@ function procesarRespuestaServidor(
 
       escaparHTML(
         respuesta.mensaje ||
-        "Este jugador ya tiene registrado este evento."
+        "Este jugador ya tiene registrada asistencia para esta actividad."
       ),
 
       "duplicado"
@@ -1007,9 +1827,6 @@ function procesarRespuestaServidor(
     );
 
 
-    /*
-     * TAMBIÉN CONTINUAMOS AUTOMÁTICAMENTE.
-     */
     prepararSiguienteEscaneo();
 
 
@@ -1037,7 +1854,10 @@ function procesarRespuestaServidor(
       "</div>" +
 
       "<strong>Documento:</strong> " +
-      escaparHTML(documento) +
+
+      escaparHTML(
+        documento
+      ) +
 
       "<br><br>" +
 
@@ -1051,13 +1871,49 @@ function procesarRespuestaServidor(
     );
 
 
-    /*
-     * Un documento desconocido no representa
-     * un riesgo de duplicar un registro válido.
-     *
-     * Por eso continuamos automáticamente.
-     */
     prepararSiguienteEscaneo();
+
+
+    return;
+
+  }
+
+
+  /*
+   * =======================================================
+   * ACTIVIDAD NO ENCONTRADA
+   * =======================================================
+   */
+
+  if (
+    estado === "ACTIVIDAD_NO_ENCONTRADA" ||
+    estado === "ACTIVIDAD_INEXISTENTE"
+  ) {
+
+    mostrarResultado(
+
+      "🔴" +
+
+      "<div class='jugador'>" +
+      "ACTIVIDAD NO ENCONTRADA" +
+      "</div>" +
+
+      escaparHTML(
+        respuesta.mensaje ||
+        "La actividad ya no existe."
+      ),
+
+      "error"
+
+    );
+
+
+    actividadSeleccionada = null;
+
+    actualizarActividadVisual();
+
+
+    prepararSiguienteEscaneoActividad();
 
 
     return;
@@ -1069,9 +1925,6 @@ function procesarRespuestaServidor(
    * =======================================================
    * ERROR DESCONOCIDO
    * =======================================================
-   *
-   * En errores inesperados detenemos el lector
-   * para seguridad.
    */
 
   mostrarResultado(
@@ -1102,14 +1955,11 @@ function procesarRespuestaServidor(
 
 
 /* =========================================================
-   PREPARAR SIGUIENTE ESCANEO
+   PREPARAR SIGUIENTE CARNET
 ========================================================= */
 
 function prepararSiguienteEscaneo() {
 
-  /*
-   * Verificamos que el lector siga activo.
-   */
   if (!lectorActivo) {
 
     return;
@@ -1121,15 +1971,6 @@ function prepararSiguienteEscaneo() {
     "🟢 LECTOR ACTIVO — PREPARE EL SIGUIENTE CARNET";
 
 
-  /*
-   * Esperamos un pequeño tiempo para:
-   *
-   * 1. Evitar que la misma imagen del QR
-   *    vuelva a detectarse inmediatamente.
-   *
-   * 2. Dar tiempo al usuario para retirar
-   *    el carnet anterior.
-   */
   setTimeout(function() {
 
     if (!lectorActivo) {
@@ -1162,7 +2003,194 @@ function prepararSiguienteEscaneo() {
 
 
 /* =========================================================
-   ERROR DE RESPUESTA
+   PREPARAR SIGUIENTE QR GENERAL
+========================================================= */
+
+function prepararSiguienteEscaneoActividad() {
+
+  if (!lectorActivo) {
+
+    return;
+
+  }
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟢 LECTOR ACTIVO — ESCANEE EL QR GENERAL";
+
+
+  setTimeout(function() {
+
+    if (!lectorActivo) {
+
+      return;
+
+    }
+
+
+    carnetBloqueado = false;
+
+
+    mostrarResultado(
+      "",
+      "oculto"
+    );
+
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE EL QR GENERAL";
+
+
+    console.log(
+      "LECTOR LISTO PARA OTRO QR GENERAL"
+    );
+
+  }, TIEMPO_ENTRE_ESCANEOS);
+
+}
+
+
+/* =========================================================
+   CAMBIAR ACTIVIDAD
+========================================================= */
+
+function cambiarActividad() {
+
+  /*
+   * No apagamos la cámara.
+   *
+   * Simplemente eliminamos la actividad seleccionada
+   * y regresamos al modo QR GENERAL.
+   */
+
+  actividadSeleccionada = null;
+
+  modoLector = "ACTIVIDAD";
+
+  carnetBloqueado = false;
+
+
+  actualizarActividadVisual();
+
+
+  document.getElementById("modoLector").className =
+    "modo modo-actividad";
+
+
+  document.getElementById("modoLector").innerHTML =
+    "📋 ESCANEE EL QR GENERAL DE LA ACTIVIDAD";
+
+
+  if (lectorActivo) {
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE EL QR GENERAL";
+
+  }
+
+
+  mostrarResultado(
+
+    "🔄" +
+
+    "<div class='jugador'>" +
+    "ACTIVIDAD CAMBIADA" +
+    "</div>" +
+
+    "Ahora escanee el QR GENERAL de la nueva actividad.",
+
+    "diagnostico"
+
+  );
+
+
+  document.getElementById("btnCambiarActividad")
+    .classList.add("oculto");
+
+
+  console.log(
+    "ACTIVIDAD ELIMINADA — ESPERANDO NUEVO QR GENERAL"
+  );
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR VISUAL ACTIVIDAD
+========================================================= */
+
+function actualizarActividadVisual() {
+
+  const panel =
+    document.getElementById(
+      "actividadSeleccionada"
+    );
+
+
+  panel.classList.add(
+    "oculto"
+  );
+
+
+  document.getElementById(
+    "actividadFecha"
+  ).textContent = "";
+
+
+  document.getElementById(
+    "actividadHora"
+  ).textContent = "";
+
+
+  document.getElementById(
+    "actividadNombre"
+  ).textContent = "";
+
+
+  document.getElementById(
+    "actividadTipo"
+  ).textContent = "";
+
+
+  document.getElementById(
+    "actividadEstado"
+  ).textContent = "";
+
+}
+
+
+/* =========================================================
+   ERROR ACTIVIDAD
+========================================================= */
+
+function mostrarErrorActividad() {
+
+  mostrarResultado(
+
+    "❌" +
+
+    "<div class='jugador'>" +
+    "NO SE RECIBIÓ CONFIRMACIÓN" +
+    "</div>" +
+
+    "El servidor no devolvió una respuesta válida." +
+
+    "<br><br>" +
+
+    "Por seguridad, el lector fue detenido.",
+
+    "error"
+
+  );
+
+
+  detenerLector();
+
+}
+
+
+/* =========================================================
+   ERROR RESPUESTA
 ========================================================= */
 
 function mostrarErrorRespuesta() {
@@ -1256,7 +2284,9 @@ function mostrarResultado(
 ) {
 
   const elemento =
-    document.getElementById("resultado");
+    document.getElementById(
+      "resultado"
+    );
 
 
   elemento.className =
@@ -1289,16 +2319,20 @@ function mostrarResultado(
    ESPERAR
 ========================================================= */
 
-function esperar(milisegundos) {
+function esperar(
+  milisegundos
+) {
 
-  return new Promise(function(resolve) {
+  return new Promise(
+    function(resolve) {
 
-    setTimeout(
-      resolve,
-      milisegundos
-    );
+      setTimeout(
+        resolve,
+        milisegundos
+      );
 
-  });
+    }
+  );
 
 }
 
@@ -1307,14 +2341,20 @@ function esperar(milisegundos) {
    HTML SEGURO
 ========================================================= */
 
-function escaparHTML(texto) {
+function escaparHTML(
+  texto
+) {
 
   const div =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   div.textContent =
-    String(texto || "");
+    String(
+      texto || ""
+    );
 
 
   return div.innerHTML;
