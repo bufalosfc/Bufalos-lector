@@ -9,7 +9,7 @@
 <button class="btn-iniciar" id="btnEscanearQRParque" onclick="iniciarEscanerQRParque()">📷 ESCANEAR QR DEL PARQUE</button>
 <button class="btn-detener oculto" id="btnDetenerJugador" onclick="detenerLectorJugador()">⛔ CANCELAR ESCANEO</button>
 </div>
-<div class="panel"><div id="actividadSeleccionada" class="actividad oculto"><div class="actividad-titulo">📋 ACTIVIDAD SELECCIONADA</div><div class="dato"><strong>Fecha:</strong> <span id="actividadFecha">-</span></div><div class="dato"><strong>Hora:</strong> <span id="actividadHora">-</span></div><div class="dato"><strong>Actividad:</strong> <span id="actividadNombre">-</span></div><div class="dato"><strong>Tipo:</strong> <span id="actividadTipo">-</span></div><div class="dato"><strong>Estado:</strong> <span id="actividadEstado">-</span></div></div>
+<div id="panelActividad" class="panel"><div id="actividadSeleccionada" class="actividad oculto"><div class="actividad-titulo">📋 ACTIVIDAD SELECCIONADA</div><div class="dato"><strong>Fecha:</strong> <span id="actividadFecha">-</span></div><div class="dato"><strong>Hora:</strong> <span id="actividadHora">-</span></div><div class="dato"><strong>Actividad:</strong> <span id="actividadNombre">-</span></div><div class="dato"><strong>Tipo:</strong> <span id="actividadTipo">-</span></div><div class="dato"><strong>Estado:</strong> <span id="actividadEstado">-</span></div></div>
 <button class="btn-iniciar" id="btnIniciar" onclick="iniciarLector()">📷 INICIAR LECTOR</button><button class="btn-detener" id="btnDetener" onclick="detenerLector()" disabled>⛔ DETENER LECTOR</button><button class="btn-cambiar oculto" id="btnCambiar" onclick="cambiarActividad()">🔄 CAMBIAR ACTIVIDAD</button>
 <button class="btn-iniciar oculto" id="btnConfirmarJugador" onclick="registrarMiAsistencia()">✅ CONFIRMAR MI ASISTENCIA</button></div>
 <div class="panel"><div id="reader"></div><div id="estadoLector" class="estado">🔴 LECTOR DETENIDO</div><div id="contador" class="contador">Registros confirmados: 0</div></div><div id="resultado" class="resultado oculto"></div></div>
@@ -27,12 +27,13 @@ function inicializarModoJugador(){
   if(!modoJugador)return;
   document.getElementById("modoJugadorPanel").classList.remove("oculto");
   document.getElementById("jugadorDocumento").textContent=jugadorModo;
+  document.getElementById("panelActividad").classList.add("oculto");
   document.getElementById("btnIniciar").classList.add("oculto");
   document.getElementById("btnDetener").classList.add("oculto");
   document.getElementById("btnCambiar").classList.add("oculto");
   document.getElementById("btnConfirmarJugador").classList.add("oculto");
   document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR GENERAL DEL PARQUE";
-  mostrarResultado("🔐<div class='jugador'>MODO JUGADOR</div>Escanea ahora el QR GENERAL físico del parque.","diagnostico");
+  mostrarResultado("🔐<div class='jugador'>MODO JUGADOR</div>Primero escanea el QR GENERAL físico del parque.","diagnostico");
 }
 
 window.addEventListener("DOMContentLoaded",inicializarModoJugador);
@@ -67,7 +68,7 @@ async function detenerLectorJugador(){
   lectorActivo=false;carnetBloqueado=false;
   document.getElementById("btnEscanearQRParque").disabled=false;
   document.getElementById("btnDetenerJugador").classList.add("oculto");
-  document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR GENERAL DEL PARQUE";
+  if(!qrParqueValidado)document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR GENERAL DEL PARQUE";
 }
 
 function procesarQRParque(decodedText){
@@ -87,7 +88,7 @@ function procesarQRParque(decodedText){
 
 function solicitarAccesoParque(){
   contadorJSONP++;const callback="bufalosAccesoParque_"+Date.now()+"_"+contadorJSONP;let terminado=false,script=null;const limpiar=()=>limpiarJSONP(callback,script);
-  window[callback]=r=>{if(terminado)return;terminado=true;try{if(r&&r.ok&&r.token){accesoParqueToken=r.token;qrParqueValidado=true;detenerLectorJugador();mostrarResultado("🟢<div class='jugador'>ACCESO VALIDADO</div>Ahora selecciona la actividad en la que estás presente.","exito");document.getElementById("btnConfirmarJugador").classList.add("oculto");consultarActividadesQRGeneralJugador();}else{mostrarResultado("❌<div class='jugador'>NO SE PUDO VALIDAR EL ACCESO</div>"+escaparHTML(r&&r.mensaje||"Inténtalo nuevamente."),"error");carnetBloqueado=false}}finally{limpiar()}};
+  window[callback]=r=>{if(terminado)return;terminado=true;try{if(r&&r.ok&&r.token){accesoParqueToken=r.token;qrParqueValidado=true;detenerLectorJugador();document.getElementById("btnEscanearQRParque").classList.add("oculto");document.getElementById("panelActividad").classList.remove("oculto");mostrarResultado("🟢<div class='jugador'>QR DEL PARQUE VALIDADO</div>Ahora selecciona la actividad.","exito");document.getElementById("btnConfirmarJugador").classList.add("oculto");consultarActividadesQRGeneralJugador();}else{mostrarResultado("❌<div class='jugador'>NO SE PUDO VALIDAR EL ACCESO</div>"+escaparHTML(r&&r.mensaje||"Inténtalo nuevamente."),"error");carnetBloqueado=false}}finally{limpiar()}};
   script=document.createElement("script");script.src=APPS_SCRIPT_URL+"?accion=iniciarAccesoQRGeneral&documento="+encodeURIComponent(jugadorModo)+"&callback="+encodeURIComponent(callback)+"&_="+Date.now();script.onerror=()=>{if(terminado)return;terminado=true;mostrarResultado("❌<div class='jugador'>ERROR DE CONEXIÓN</div>No se pudo validar el acceso.","error");carnetBloqueado=false;limpiar()};document.body.appendChild(script);
 }
 
