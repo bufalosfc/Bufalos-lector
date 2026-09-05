@@ -32,7 +32,7 @@ function inicializarModoJugador(){
   document.getElementById("btnCambiar").classList.add("oculto");
   document.getElementById("btnConfirmarJugador").classList.add("oculto");
   document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR";
-  mostrarResultado("🔐<div class='jugador'>MODO USUARIO</div>Escanea ahora el QR GENERAL físico del parque.","diagnostico");
+  mostrarResultado("🔐<div class='jugador'>MODO USUARIO</div>Escanea ahora el QR","diagnostico");
 }
 
 window.addEventListener("DOMContentLoaded",inicializarModoJugador);
@@ -52,7 +52,7 @@ async function iniciarEscanerQRParque(){
     if(trasera)camaraSeleccionada=trasera.id;
     await html5QrCode.start(camaraSeleccionada,{fps:10,qrbox:{width:250,height:250},aspectRatio:1,rememberLastUsedCamera:true},procesarQRParque,function(){});
     lectorActivo=true;carnetBloqueado=false;
-    document.getElementById("estadoLector").innerHTML="🟢 ESCANEE EL QR GENERAL DEL PARQUE";
+    document.getElementById("estadoLector").innerHTML="🟢 ESCANEE EL QR";
   }catch(error){
     console.error(error);lectorActivo=false;
     document.getElementById("btnEscanearQRParque").disabled=false;
