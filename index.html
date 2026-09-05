@@ -75,12 +75,12 @@ function procesarQRParque(decodedText){
   const texto=String(decodedText||"").trim();if(!texto)return;
   if(!esQRGeneralPermanente(texto)){
     carnetBloqueado=true;
-    mostrarResultado("⚠️<div class='jugador'>QR INCORRECTO</div>Debes escanear el QR GENERAL de BÚFALOS FC que está instalado en el parque.","diagnostico");
+    mostrarResultado("⚠️<div class='jugador'>QR INCORRECTO</div>Debes escanear el QR","diagnostico");
     setTimeout(()=>{carnetBloqueado=false;mostrarResultado("","oculto")},2000);
     return;
   }
   carnetBloqueado=true;
-  mostrarResultado("🔐<div class='jugador'>QR DEL PARQUE VALIDADO</div>⏳ Preparando tu acceso...","diagnostico");
+  mostrarResultado("🔐<div class='jugador'>QR VALIDADO</div>⏳ Preparando tu acceso...","diagnostico");
   document.getElementById("estadoLector").innerHTML="🟡 VALIDANDO ACCESO...";
   solicitarAccesoParque();
 }
@@ -107,7 +107,7 @@ function seleccionarActividadJugador(id){
   const lista=window._bufalosActividadesJugador||[];const a=lista.find(x=>String(x.actividadId)===String(id));if(!a)return;
   actividadSeleccionada={actividadId:a.actividadId||"",fecha:a.fecha||"",hora:a.hora||"",actividad:a.actividad||"",tipo:a.tipo||"",estado:a.estado||""};
   mostrarActividadSeleccionada();document.getElementById("btnConfirmarJugador").classList.remove("oculto");document.getElementById("btnCambiar").classList.add("oculto");
-  mostrarResultado("🟢<div class='jugador'>ACTIVIDAD SELECCIONADA</div><strong>"+escaparHTML(actividadSeleccionada.actividad)+"</strong><br><br>Confirma solamente si estás físicamente en el parque.","exito");
+  mostrarResultado("🟢<div class='jugador'>ACTIVIDAD SELECCIONADA</div><strong>"+escaparHTML(actividadSeleccionada.actividad)+"</strong><br><br>Confirma solamente si estás físicamente en el lugar.","exito");
 }
 
 function registrarMiAsistencia(){
