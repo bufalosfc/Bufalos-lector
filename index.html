@@ -5,8 +5,8 @@
 *{box-sizing:border-box}body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}.contenedor{max-width:700px;margin:auto}h1{text-align:center;margin-bottom:20px}.panel{background:#fff;border-radius:14px;padding:20px;margin-bottom:15px;box-shadow:0 3px 12px rgba(0,0,0,.10)}button{width:100%;padding:13px;font-size:16px;border-radius:8px;border:none;margin-bottom:12px;cursor:pointer;font-weight:bold}button:disabled{opacity:.5;cursor:not-allowed}.btn-iniciar{background:#198754;color:#fff}.btn-detener{background:#dc3545;color:#fff}.btn-cambiar{background:#0d6efd;color:#fff}#reader{width:100%;max-width:500px;margin:15px auto}.estado{text-align:center;font-weight:bold;padding:12px;border-radius:8px;margin-top:10px;background:#eee}.actividad{background:#e7f1ff;border:2px solid #0d6efd;border-radius:12px;padding:15px;margin-bottom:15px}.actividad-titulo{text-align:center;font-size:20px;font-weight:bold;margin-bottom:12px}.dato{padding:6px 0;font-size:16px}.dato strong{display:inline-block;min-width:90px}.resultado{text-align:center;padding:20px;border-radius:12px;margin-top:15px;font-size:18px;line-height:1.5}.diagnostico{background:#fff3cd;color:#664d03}.exito{background:#d1e7dd;color:#0f5132}.error{background:#f8d7da;color:#842029}.duplicado{background:#fff3cd;color:#664d03}.jugador{font-size:24px;font-weight:bold;margin:10px 0}.contador{text-align:center;font-size:18px;font-weight:bold;margin-top:10px}.oculto{display:none!important}.selector-actividad{margin-top:15px}.opcion-actividad{width:100%;text-align:left;background:#f8f9fa;border:2px solid #dee2e6;color:#222;padding:14px;border-radius:10px;margin-bottom:10px}.opcion-actividad:hover{border-color:#0d6efd;background:#e7f1ff}.opcion-actividad strong{display:block;font-size:18px;margin-bottom:6px}.opcion-actividad span{display:block;font-size:14px;line-height:1.45;font-weight:normal}.nota-selector{text-align:center;margin:0 0 15px}.cargando{text-align:center;padding:15px}
 </style></head><body><div class="contenedor"><h1>⚽ BÚFALOS FC</h1>
 <div id="modoJugadorPanel" class="panel oculto">
-<div id="jugadorIdentidad" class="actividad"><div class="actividad-titulo">⚽ MODO JUGADOR</div><div class="dato"><strong>Documento:</strong> <span id="jugadorDocumento">-</span></div><p style="margin:12px 0 0;text-align:center;">Primero debes escanear el <strong>QR GENERAL FÍSICO DEL PARQUE</strong>. Después podrás seleccionar la actividad y registrar solamente tu propia asistencia.</p></div>
-<button class="btn-iniciar" id="btnEscanearQRParque" onclick="iniciarEscanerQRParque()">📷 ESCANEAR QR DEL PARQUE</button>
+<div id="jugadorIdentidad" class="actividad"><div class="actividad-titulo">⚽ MODO USUARIO</div><div class="dato"><strong>Documento:</strong> <span id="jugadorDocumento">-</span></div><p style="margin:12px 0 0;text-align:center;">Primero debes escanear el <strong>QR GENERAL FÍSICO DEL PARQUE</strong>. Después podrás seleccionar la actividad y registrar solamente tu propia asistencia.</p></div>
+<button class="btn-iniciar" id="btnEscanearQRParque" onclick="iniciarEscanerQRParque()">📷 ESCANEAR QR</button>
 <button class="btn-detener oculto" id="btnDetenerJugador" onclick="detenerLectorJugador()">⛔ CANCELAR ESCANEO</button>
 </div>
 <div class="panel"><div id="actividadSeleccionada" class="actividad oculto"><div class="actividad-titulo">📋 ACTIVIDAD SELECCIONADA</div><div class="dato"><strong>Fecha:</strong> <span id="actividadFecha">-</span></div><div class="dato"><strong>Hora:</strong> <span id="actividadHora">-</span></div><div class="dato"><strong>Actividad:</strong> <span id="actividadNombre">-</span></div><div class="dato"><strong>Tipo:</strong> <span id="actividadTipo">-</span></div><div class="dato"><strong>Estado:</strong> <span id="actividadEstado">-</span></div></div>
@@ -31,8 +31,8 @@ function inicializarModoJugador(){
   document.getElementById("btnDetener").classList.add("oculto");
   document.getElementById("btnCambiar").classList.add("oculto");
   document.getElementById("btnConfirmarJugador").classList.add("oculto");
-  document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR GENERAL DEL PARQUE";
-  mostrarResultado("🔐<div class='jugador'>MODO JUGADOR</div>Escanea ahora el QR GENERAL físico del parque.","diagnostico");
+  document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR";
+  mostrarResultado("🔐<div class='jugador'>MODO USUARIO</div>Escanea ahora el QR GENERAL físico del parque.","diagnostico");
 }
 
 window.addEventListener("DOMContentLoaded",inicializarModoJugador);
@@ -67,7 +67,7 @@ async function detenerLectorJugador(){
   lectorActivo=false;carnetBloqueado=false;
   document.getElementById("btnEscanearQRParque").disabled=false;
   document.getElementById("btnDetenerJugador").classList.add("oculto");
-  document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR GENERAL DEL PARQUE";
+  document.getElementById("estadoLector").innerHTML="🔐 ESPERANDO QR";
 }
 
 function procesarQRParque(decodedText){
