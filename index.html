@@ -6,88 +6,222 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BÚFALOS FC - HUB QR</title>
+
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f4f6f8;color:#222}
-.contenedor{max-width:700px;margin:auto}
-h1{text-align:center;margin-bottom:20px}
-.panel{background:#fff;border-radius:14px;padding:20px;margin-bottom:15px;box-shadow:0 3px 12px rgba(0,0,0,.10)}
-button{width:100%;padding:13px;font-size:16px;border-radius:8px;border:none;margin-bottom:12px;cursor:pointer;font-weight:bold}
-button:disabled{opacity:.5;cursor:not-allowed}
 
-.btn-iniciar{background:#198754;color:#fff}
-.btn-detener{background:#dc3545;color:#fff}
-.btn-cambiar{background:#0d6efd;color:#fff}
-.btn-confirmar{background:#198754;color:#fff}
-
-#reader{width:100%;max-width:500px;margin:15px auto}
-
-.estado{text-align:center;font-weight:bold;padding:12px;border-radius:8px;margin-top:10px;background:#eee}
-
-.actividad{
-background:#e7f1ff;
-border:2px solid #0d6efd;
-border-radius:12px;
-padding:15px;
-margin-bottom:15px
+body{
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#f4f6f8;
+  color:#222;
 }
 
-.actividad-titulo{text-align:center;font-size:20px;font-weight:bold;margin-bottom:12px}
-.dato{padding:6px 0;font-size:16px}
-.dato strong{display:inline-block;min-width:90px}
+.contenedor{
+  max-width:700px;
+  margin:auto;
+}
 
-.resultado{text-align:center;padding:20px;border-radius:12px;margin-top:15px;font-size:18px;line-height:1.5}
-.diagnostico{background:#fff3cd;color:#664d03}
-.exito{background:#d1e7dd;color:#0f5132}
-.error{background:#f8d7da;color:#842029}
-.duplicado{background:#fff3cd;color:#664d03}
+h1{
+  text-align:center;
+  margin-bottom:20px;
+}
 
-.jugador{font-size:24px;font-weight:bold;margin:10px 0}
-.contador{text-align:center;font-size:18px;font-weight:bold;margin-top:10px}
-.oculto{display:none!important}
+.panel{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:15px;
+  box-shadow:0 3px 12px rgba(0,0,0,.10);
+}
 
-.selector-actividad{margin-top:15px}
+button{
+  width:100%;
+  padding:13px;
+  font-size:16px;
+  border-radius:8px;
+  border:none;
+  margin-bottom:12px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.btn-iniciar{
+  background:#198754;
+  color:#fff;
+}
+
+.btn-detener{
+  background:#dc3545;
+  color:#fff;
+}
+
+.btn-cambiar{
+  background:#0d6efd;
+  color:#fff;
+}
+
+.btn-confirmar{
+  background:#198754;
+  color:#fff;
+}
+
+#reader{
+  width:100%;
+  max-width:500px;
+  margin:15px auto;
+}
+
+.estado{
+  text-align:center;
+  font-weight:bold;
+  padding:12px;
+  border-radius:8px;
+  margin-top:10px;
+  background:#eee;
+}
+
+.actividad{
+  background:#e7f1ff;
+  border:2px solid #0d6efd;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:15px;
+}
+
+.actividad-titulo{
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:12px;
+}
+
+.dato{
+  padding:6px 0;
+  font-size:16px;
+}
+
+.dato strong{
+  display:inline-block;
+  min-width:90px;
+}
+
+.resultado{
+  text-align:center;
+  padding:20px;
+  border-radius:12px;
+  margin-top:15px;
+  font-size:18px;
+  line-height:1.5;
+}
+
+.diagnostico{
+  background:#fff3cd;
+  color:#664d03;
+}
+
+.exito{
+  background:#d1e7dd;
+  color:#0f5132;
+}
+
+.error{
+  background:#f8d7da;
+  color:#842029;
+}
+
+.duplicado{
+  background:#fff3cd;
+  color:#664d03;
+}
+
+.jugador{
+  font-size:24px;
+  font-weight:bold;
+  margin:10px 0;
+}
+
+.contador{
+  text-align:center;
+  font-size:18px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.oculto{
+  display:none!important;
+}
+
+.selector-actividad{
+  margin-top:15px;
+}
+
 .opcion-actividad{
-width:100%;
-text-align:left;
-background:#f8f9fa;
-border:2px solid #dee2e6;
-color:#222;
-padding:14px;
-border-radius:10px;
-margin-bottom:10px
+  width:100%;
+  text-align:left;
+  background:#f8f9fa;
+  border:2px solid #dee2e6;
+  color:#222;
+  padding:14px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 
 .opcion-actividad:hover{
-border-color:#0d6efd;
-background:#e7f1ff
+  border-color:#0d6efd;
+  background:#e7f1ff;
+}
+
+.opcion-actividad.seleccionada{
+  border-color:#198754!important;
+  background:#d1e7dd!important;
 }
 
 .opcion-actividad strong{
-display:block;
-font-size:18px;
-margin-bottom:6px
+  display:block;
+  font-size:18px;
+  margin-bottom:6px;
 }
 
 .opcion-actividad span{
-display:block;
-font-size:14px;
-line-height:1.45;
-font-weight:normal
+  display:block;
+  font-size:14px;
+  line-height:1.45;
+  font-weight:normal;
 }
 
-.nota-selector{text-align:center;margin:0 0 15px}
-.cargando{text-align:center;padding:15px}
+.nota-selector{
+  text-align:center;
+  margin:0 0 15px;
+}
+
+.cargando{
+  text-align:center;
+  padding:15px;
+}
 
 .modo{
-text-align:center;
-font-size:14px;
-font-weight:bold;
-margin-top:5px;
-color:#555
+  text-align:center;
+  font-size:14px;
+  font-weight:bold;
+  margin-top:5px;
+  color:#555;
 }
+
+.separador{
+  margin:18px 0;
+  border:0;
+  border-top:1px solid #ddd;
+}
+
 </style>
 
 </head>
@@ -98,7 +232,9 @@ color:#555
 
 <h1>⚽ BÚFALOS FC</h1>
 
-<!-- ACTIVIDAD -->
+<!-- ==========================================
+     ACTIVIDAD CONFIRMADA
+========================================== -->
 
 <div class="panel">
 
@@ -135,11 +271,16 @@ color:#555
 
 </div>
 
+<!-- BOTÓN INICIAR -->
+
 <button
 class="btn-iniciar"
 id="btnIniciar"
-onclick="iniciarLector()">
+onclick="iniciarLector()"
+disabled>
 📷 INICIAR LECTOR </button>
+
+<!-- BOTÓN DETENER -->
 
 <button
 class="btn-detener"
@@ -147,6 +288,8 @@ id="btnDetener"
 onclick="detenerLector()"
 disabled>
 ⛔ DETENER LECTOR </button>
+
+<!-- BOTÓN CAMBIAR -->
 
 <button
 class="btn-cambiar oculto"
@@ -156,14 +299,32 @@ onclick="cambiarActividad()">
 
 </div>
 
-<!-- LECTOR -->
+<!-- ==========================================
+     SELECCIÓN DE ACTIVIDAD
+========================================== -->
+
+<div class="panel" id="panelActividades">
+
+<div id="selectorActividades">
+
+<div class="cargando">
+🔎 Cargando actividades...
+</div>
+
+</div>
+
+</div>
+
+<!-- ==========================================
+     LECTOR
+========================================== -->
 
 <div class="panel">
 
 <div id="reader"></div>
 
 <div id="estadoLector" class="estado">
-🔴 LECTOR DETENIDO
+🟡 CARGANDO ACTIVIDADES...
 </div>
 
 <div id="contador" class="contador">
@@ -172,1019 +333,1577 @@ Registros confirmados: 0
 
 </div>
 
+<!-- ==========================================
+     RESULTADO
+========================================== -->
+
 <div id="resultado" class="resultado oculto"></div>
 
 </div>
 
 <script>
 
+/* =================================================
+   CONFIGURACIÓN
+================================================= */
+
 const APPS_SCRIPT_URL =
 "https://script.google.com/macros/s/AKfycbx18G_rLYrqsriwsx-hSGYqsTUlfdfBCqVQ6vNTIzDvXLWUVS1V7Ojl54wMe8Vm51Zb/exec";
 
 const TIEMPO_ENTRE_ESCANEOS = 2000;
 
+
+/* =================================================
+   VARIABLES
+================================================= */
+
 let html5QrCode = null;
+
 let lectorActivo = false;
+
 let carnetBloqueado = false;
+
 let escaneosRegistrados = 0;
+
 let contadorJSONP = 0;
 
 let actividadSeleccionada = null;
-let procesandoActividad = false;
-let consultandoActividades = false;
 
 let actividadesDisponibles = [];
 
+let actividadIndiceSeleccionada = -1;
 
-/* ================================
-   INICIAR LECTOR
-================================ */
+let consultandoActividades = false;
 
-async function iniciarLector(){
 
-if(lectorActivo)return;
+/* =================================================
+   AL CARGAR HUB
+================================================= */
 
-try{
+document.addEventListener("DOMContentLoaded",function(){
 
-document.getElementById("estadoLector").innerHTML =
-"🟡 INICIANDO CÁMARA...";
+  cargarActividades();
 
-html5QrCode = new Html5Qrcode("reader");
-
-const cameras = await Html5Qrcode.getCameras();
-
-if(!cameras || !cameras.length)
-throw new Error("No se encontró ninguna cámara.");
-
-let camaraSeleccionada = cameras[0].id;
-
-const trasera = cameras.find(c=>{
-const n = String(c.label || "").toLowerCase();
-
-return n.includes("back") ||
-n.includes("rear") ||
-n.includes("trasera") ||
-n.includes("environment");
 });
 
-if(trasera)
-camaraSeleccionada = trasera.id;
 
-await html5QrCode.start(
-camaraSeleccionada,
-{
-fps:10,
-qrbox:{width:250,height:250},
-aspectRatio:1,
-rememberLastUsedCamera:true
-},
-procesarQR,
-function(){}
-);
-
-lectorActivo = true;
-carnetBloqueado = false;
-
-document.getElementById("btnIniciar").disabled = true;
-document.getElementById("btnDetener").disabled = false;
-
-if(actividadSeleccionada){
-
-document.getElementById("estadoLector").innerHTML =
-"🟢 ACTIVIDAD LISTA — ESCANEE CARNET";
-
-document.getElementById("btnCambiar")
-.classList.remove("oculto");
-
-}else{
-
-document.getElementById("estadoLector").innerHTML =
-"🟡 SELECCIONE UNA ACTIVIDAD";
-
-cargarActividades();
-
-}
-
-mostrarResultado("","oculto");
-
-}catch(error){
-
-console.error(error);
-
-lectorActivo = false;
-carnetBloqueado = false;
-
-document.getElementById("btnIniciar").disabled = false;
-document.getElementById("btnDetener").disabled = true;
-
-document.getElementById("estadoLector").innerHTML =
-"❌ NO SE PUDO INICIAR LA CÁMARA";
-
-mostrarResultado(
-"❌<div class='jugador'>ERROR</div>"+
-escaparHTML(
-error && error.message ?
-error.message :
-"Error desconocido."
-),
-"error"
-);
-
-}
-
-}
-
-
-/* ================================
-   DETENER
-================================ */
-
-async function detenerLector(){
-
-try{
-
-if(html5QrCode && lectorActivo)
-await html5QrCode.stop();
-
-}catch(e){
-
-console.error(e);
-
-}
-
-lectorActivo = false;
-carnetBloqueado = false;
-procesandoActividad = false;
-consultandoActividades = false;
-
-document.getElementById("btnIniciar").disabled = false;
-document.getElementById("btnDetener").disabled = true;
-
-document.getElementById("btnCambiar")
-.classList.add("oculto");
-
-document.getElementById("actividadSeleccionada")
-.classList.add("oculto");
-
-actividadSeleccionada = null;
-
-mostrarResultado("","oculto");
-
-document.getElementById("estadoLector").innerHTML =
-"🔴 LECTOR DETENIDO";
-
-}
-
-
-/* ================================
-   PROCESAR QR
-================================ */
-
-function procesarQR(decodedText){
-
-if(carnetBloqueado || !lectorActivo)
-return;
-
-const texto = String(decodedText || "").trim();
-
-if(!texto)return;
-
-
-/*
-   IMPORTANTE:
-
-   QR GENERAL YA NO ES NECESARIO
-   PARA ESCOGER LA ACTIVIDAD.
-
-   La actividad se selecciona
-   directamente al iniciar el lector.
-*/
-
-
-/* QR DE ACTIVIDAD DIRECTO */
-
-const actividadQR = extraerActividadDesdeQR(texto);
-
-if(actividadQR){
-
-mostrarResultado(
-"ℹ️<div class='jugador'>QR DE ACTIVIDAD</div>"+
-"Este lector utiliza la selección de actividad desde la pantalla.",
-"diagnostico"
-);
-
-return;
-
-}
-
-
-/* SI NO HAY ACTIVIDAD */
-
-if(!actividadSeleccionada){
-
-carnetBloqueado = true;
-
-mostrarResultado(
-"⚠️<div class='jugador'>SELECCIONE UNA ACTIVIDAD</div>"+
-"Primero seleccione y confirme la actividad a la que desea registrar asistencia.",
-"diagnostico"
-);
-
-document.getElementById("estadoLector").innerHTML =
-"🟡 SELECCIONE UNA ACTIVIDAD";
-
-setTimeout(()=>{
-
-carnetBloqueado = false;
-
-if(lectorActivo)
-document.getElementById("estadoLector").innerHTML =
-"🟡 SELECCIONE UNA ACTIVIDAD";
-
-},TIEMPO_ENTRE_ESCANEOS);
-
-return;
-
-}
-
-
-/* QR DEL JUGADOR */
-
-registrarJugadorEnActividad(texto);
-
-}
-
-
-/* ================================
+/* =================================================
    CARGAR ACTIVIDADES
-================================ */
+================================================= */
 
 function cargarActividades(){
 
-if(consultandoActividades)
-return;
+  if(consultandoActividades)return;
 
-consultandoActividades = true;
+  consultandoActividades = true;
 
-mostrarResultado(
-"🔎<div class='jugador'>ACTIVIDADES</div>"+
-"⏳ Consultando actividades disponibles...",
-"diagnostico"
-);
+  actividadIndiceSeleccionada = -1;
 
-document.getElementById("estadoLector").innerHTML =
-"🟡 CONSULTANDO ACTIVIDADES...";
+  document.getElementById("selectorActividades").innerHTML =
+    "<div class='cargando'>"+
+    "🔎<div class='jugador'>ACTIVIDADES</div>"+
+    "⏳ Consultando actividades disponibles..."+
+    "</div>";
 
-contadorJSONP++;
+  document.getElementById("estadoLector").innerHTML =
+    "🟡 CONSULTANDO ACTIVIDADES...";
 
-const callback =
-"bufalosActividades_"+Date.now()+"_"+contadorJSONP;
+  document.getElementById("btnIniciar").disabled = true;
 
-let terminado = false;
-let script = null;
+  contadorJSONP++;
 
-const limpiar = () =>
-limpiarJSONP(callback,script);
+  const callback =
+    "bufalosActividades_"+
+    Date.now()+
+    "_"+
+    contadorJSONP;
 
-window[callback] = r => {
+  let terminado = false;
+  let script = null;
 
-if(terminado)return;
+  const limpiar = () =>
+    limpiarJSONP(callback,script);
 
-terminado = true;
 
-try{
+  window[callback] = function(r){
 
-if(!r){
+    if(terminado)return;
 
-mostrarErrorActividades();
+    terminado = true;
 
-return;
+    try{
+
+      if(!r){
+
+        mostrarErrorActividades(
+          "El servidor no devolvió información."
+        );
+
+        return;
+      }
+
+      procesarRespuestaActividades(r);
+
+    }finally{
+
+      limpiar();
+
+    }
+
+  };
+
+
+  script = document.createElement("script");
+
+  script.src =
+    APPS_SCRIPT_URL+
+    "?accion=actividadesQRGeneral"+
+    "&callback="+
+    encodeURIComponent(callback)+
+    "&_="+
+    Date.now();
+
+
+  script.onerror = function(){
+
+    if(terminado)return;
+
+    terminado = true;
+
+    mostrarErrorActividades(
+      "No se pudo conectar con el servidor."
+    );
+
+    limpiar();
+
+  };
+
+
+  script._bufalosTimeout =
+    setTimeout(function(){
+
+      if(terminado)return;
+
+      terminado = true;
+
+      mostrarErrorActividades(
+        "El sistema tardó demasiado en responder."
+      );
+
+      limpiar();
+
+    },15000);
+
+
+  document.body.appendChild(script);
 
 }
 
-procesarRespuestaActividades(r);
 
-}finally{
-
-limpiar();
-
-}
-
-};
-
-script = document.createElement("script");
-
-script.src =
-APPS_SCRIPT_URL+
-"?accion=actividadesQRGeneral"+
-"&callback="+encodeURIComponent(callback)+
-"&_="+Date.now();
-
-script.onerror = ()=>{
-
-if(terminado)return;
-
-terminado = true;
-
-mostrarErrorActividades();
-
-limpiar();
-
-};
-
-script._bufalosTimeout =
-setTimeout(()=>{
-
-if(terminado)return;
-
-terminado = true;
-
-mostrarResultado(
-"⚠️<div class='jugador'>SIN RESPUESTA</div>"+
-"El sistema tardó demasiado en responder.",
-"error"
-);
-
-document.getElementById("estadoLector").innerHTML =
-"🔴 ERROR CONSULTANDO ACTIVIDADES";
-
-consultandoActividades = false;
-
-limpiar();
-
-},15000);
-
-document.body.appendChild(script);
-
-}
-
-
-/* ================================
+/* =================================================
    RESPUESTA ACTIVIDADES
-================================ */
+================================================= */
 
 function procesarRespuestaActividades(r){
 
-const lista =
-Array.isArray(r.actividades) ?
-r.actividades :
-[];
+  consultandoActividades = false;
 
-if(r.ok !== true){
+  const lista =
+    Array.isArray(r.actividades)
+      ? r.actividades
+      : [];
 
-mostrarErrorActividades(r.mensaje);
-return;
+
+  if(r.ok !== true){
+
+    mostrarErrorActividades(
+      r.mensaje ||
+      "El servidor devolvió un error."
+    );
+
+    return;
+
+  }
+
+
+  actividadesDisponibles = lista;
+
+
+  if(lista.length === 0){
+
+    document.getElementById("selectorActividades").innerHTML =
+      "<div class='resultado diagnostico'>"+
+      "⚠️<div class='jugador'>NO HAY ACTIVIDADES</div>"+
+      "No hay actividades programadas para hoy."+
+      "<br><br>"+
+      "<button class='btn-cambiar' onclick='cargarActividades()'>"+
+      "🔄 ACTUALIZAR ACTIVIDADES"+
+      "</button>"+
+      "</div>";
+
+    document.getElementById("estadoLector").innerHTML =
+      "🟡 NO HAY ACTIVIDADES PARA HOY";
+
+    document.getElementById("btnIniciar").disabled = true;
+
+    return;
+
+  }
+
+
+  mostrarSelectorActividades(lista);
 
 }
 
-actividadesDisponibles = lista;
 
-if(lista.length === 0){
-
-mostrarResultado(
-"⚠️<div class='jugador'>NO HAY ACTIVIDADES</div>"+
-"No hay actividades disponibles para seleccionar.",
-"diagnostico"
-);
-
-document.getElementById("estadoLector").innerHTML =
-"🟡 NO HAY ACTIVIDADES DISPONIBLES";
-
-consultandoActividades = false;
-
-return;
-
-}
-
-mostrarSelectorActividades(lista);
-
-}
-
-
-/* ================================
-   SELECTOR
-================================ */
+/* =================================================
+   MOSTRAR SELECTOR
+================================================= */
 
 function mostrarSelectorActividades(lista){
 
-let html =
-"<div class='jugador'>SELECCIONE LA ACTIVIDAD</div>"+
-"<p class='nota-selector'>Seleccione a qué actividad va a registrar la asistencia.</p>"+
-"<div class='selector-actividad'>";
+  let html =
 
-lista.forEach((a,i)=>{
+    "<div class='jugador'>"+
+    "📋 SELECCIONE LA ACTIVIDAD"+
+    "</div>"+
 
-html +=
-"<button class='opcion-actividad' "+
-"onclick='seleccionarActividadDesdeSelector("+i+")'>"+
-"<strong>"+
-escaparHTML(a.actividad || a.nombre || "Actividad")+
-"</strong>"+
-"<span>"+
-"📅 "+escaparHTML(a.fecha || "")+
-" · 🕐 "+escaparHTML(a.hora || "")+
-"<br>🏷️ "+escaparHTML(a.tipo || "")+
-"</span>"+
-"</button>";
+    "<p class='nota-selector'>"+
+    "Seleccione la actividad a la que desea registrar asistencia."+
+    "</p>"+
 
-});
+    "<div class='selector-actividad'>";
 
-html += "</div>";
 
-html +=
-"<button class='btn-confirmar' "+
-"id='btnConfirmarActividad' "+
-"disabled>"+
-"✅ CONFIRMAR ACTIVIDAD"+
-"</button>";
+  lista.forEach(function(a,i){
 
-mostrarResultado(html,"diagnostico");
+    const nombre =
+      a.actividad ||
+      a.nombre ||
+      "Actividad";
 
-document.getElementById("estadoLector").innerHTML =
-"🟡 SELECCIONE LA ACTIVIDAD";
 
-consultandoActividades = false;
+    html +=
+
+      "<button "+
+      "type='button' "+
+      "class='opcion-actividad' "+
+      "id='actividadOpcion_"+i+"' "+
+      "onclick='seleccionarActividad("+i+")'>"+
+
+      "<strong>"+
+      escaparHTML(nombre)+
+      "</strong>"+
+
+      "<span>"+
+      "📅 "+
+      escaparHTML(a.fecha || "-")+
+      " · 🕐 "+
+      escaparHTML(a.hora || "-")+
+      "<br>"+
+      "🏷️ "+
+      escaparHTML(a.tipo || "-")+
+      "<br>"+
+      "📌 Estado: "+
+      escaparHTML(a.estado || "-")+
+      "</span>"+
+
+      "</button>";
+
+  });
+
+
+  html +=
+
+    "</div>"+
+
+    "<hr class='separador'>"+
+
+    "<button "+
+    "type='button' "+
+    "class='btn-confirmar' "+
+    "id='btnConfirmarActividad' "+
+    "onclick='confirmarActividad()' "+
+    "disabled>"+
+
+    "✅ CONFIRMAR ACTIVIDAD"+
+
+    "</button>";
+
+
+  document.getElementById("selectorActividades").innerHTML =
+    html;
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟡 SELECCIONE UNA ACTIVIDAD";
+
+
+  document.getElementById("btnIniciar").disabled = true;
 
 }
 
 
-/* ================================
+/* =================================================
    SELECCIONAR ACTIVIDAD
-================================ */
+================================================= */
 
-function seleccionarActividadDesdeSelector(indice){
+function seleccionarActividad(indice){
 
-const a = actividadesDisponibles[indice];
+  const a =
+    actividadesDisponibles[indice];
 
-if(!a)return;
+  if(!a)return;
 
 
-/* MARCAR VISUALMENTE */
+  actividadIndiceSeleccionada = indice;
 
-document.querySelectorAll(".opcion-actividad")
-.forEach((b,i)=>{
 
-if(i === indice){
+  document
+    .querySelectorAll(".opcion-actividad")
+    .forEach(function(b){
 
-b.style.borderColor = "#198754";
-b.style.background = "#d1e7dd";
+      b.classList.remove("seleccionada");
 
-}else{
+    });
 
-b.style.borderColor = "#dee2e6";
-b.style.background = "#f8f9fa";
+
+  const boton =
+    document.getElementById(
+      "actividadOpcion_"+indice
+    );
+
+
+  if(boton)
+    boton.classList.add("seleccionada");
+
+
+  const confirmar =
+    document.getElementById(
+      "btnConfirmarActividad"
+    );
+
+
+  if(confirmar)
+    confirmar.disabled = false;
+
+
+  document.getElementById("estadoLector").innerHTML =
+    "🟢 ACTIVIDAD SELECCIONADA — CONFIRME";
+
+
+  mostrarResultado(
+
+    "🟢<div class='jugador'>ACTIVIDAD SELECCIONADA</div>"+
+
+    "<strong>"+
+    escaparHTML(
+      a.actividad ||
+      a.nombre ||
+      "Actividad"
+    )+
+    "</strong>"+
+
+    "<br><br>"+
+
+    "Pulse <strong>CONFIRMAR ACTIVIDAD</strong> para continuar.",
+
+    "diagnostico"
+
+  );
 
 }
 
-});
 
-
-const boton =
-document.getElementById("btnConfirmarActividad");
-
-if(!boton)return;
-
-boton.disabled = false;
-
-boton.onclick = () =>
-confirmarActividad(a);
-
-}
-
-
-/* ================================
+/* =================================================
    CONFIRMAR ACTIVIDAD
-================================ */
+================================================= */
 
-function confirmarActividad(a){
+function confirmarActividad(){
 
-if(!a)return;
+  if(
+    actividadIndiceSeleccionada < 0 ||
+    !actividadesDisponibles[
+      actividadIndiceSeleccionada
+    ]
+  ){
 
-actividadSeleccionada = {
+    mostrarResultado(
 
-actividadId:a.actividadId || "",
-fecha:a.fecha || "",
-hora:a.hora || "",
-actividad:a.actividad || a.nombre || "",
-tipo:a.tipo || "",
-estado:a.estado || ""
-};
+      "⚠️<div class='jugador'>SELECCIONE UNA ACTIVIDAD</div>"+
+      "Debe seleccionar una actividad antes de confirmar.",
 
-mostrarActividadSeleccionada();
+      "diagnostico"
 
-document.getElementById("btnCambiar")
-.classList.remove("oculto");
+    );
 
-document.getElementById("estadoLector").innerHTML =
-"🟢 ACTIVIDAD CONFIRMADA — ESCANEE CARNETS";
+    return;
 
-mostrarResultado(
-"🟢<div class='jugador'>ACTIVIDAD CONFIRMADA</div>"+
-"<strong>"+
-escaparHTML(actividadSeleccionada.actividad)+
-"</strong>"+
-"<br><br>"+
-"📷 Ahora puede escanear los carnets.",
-"exito"
-);
+  }
 
-carnetBloqueado = false;
-consultandoActividades = false;
-procesandoActividad = false;
+
+  const a =
+    actividadesDisponibles[
+      actividadIndiceSeleccionada
+    ];
+
+
+  actividadSeleccionada = {
+
+    actividadId:
+      a.actividadId || "",
+
+    fecha:
+      a.fecha || "",
+
+    hora:
+      a.hora || "",
+
+    actividad:
+      a.actividad ||
+      a.nombre ||
+      "",
+
+    tipo:
+      a.tipo || "",
+
+    estado:
+      a.estado || ""
+
+  };
+
+
+  if(!actividadSeleccionada.actividadId){
+
+    mostrarResultado(
+
+      "❌<div class='jugador'>ACTIVIDAD INVÁLIDA</div>"+
+      "La actividad seleccionada no tiene un identificador válido.",
+
+      "error"
+
+    );
+
+    return;
+
+  }
+
+
+  mostrarActividadSeleccionada();
+
+
+  document.getElementById("panelActividades")
+    .classList.add("oculto");
+
+
+  document.getElementById("btnIniciar")
+    .disabled = false;
+
+
+  document.getElementById("btnCambiar")
+    .classList.remove("oculto");
+
+
+  document.getElementById("estadoLector")
+    .innerHTML =
+    "🟢 ACTIVIDAD CONFIRMADA — PUEDE INICIAR EL LECTOR";
+
+
+  mostrarResultado(
+
+    "🟢<div class='jugador'>ACTIVIDAD CONFIRMADA</div>"+
+
+    "<strong>"+
+    escaparHTML(
+      actividadSeleccionada.actividad
+    )+
+    "</strong>"+
+
+    "<br><br>"+
+
+    "Ahora pulse <strong>INICIAR LECTOR</strong> para comenzar a escanear los carnets.",
+
+    "exito"
+
+  );
 
 }
 
 
-/* ================================
-   ACTIVIDAD SELECCIONADA
-================================ */
+/* =================================================
+   MOSTRAR ACTIVIDAD CONFIRMADA
+================================================= */
 
 function mostrarActividadSeleccionada(){
 
-const p =
-document.getElementById("actividadSeleccionada");
+  const p =
+    document.getElementById(
+      "actividadSeleccionada"
+    );
 
-p.classList.remove("oculto");
 
-document.getElementById("actividadFecha")
-.textContent =
-actividadSeleccionada.fecha || "-";
+  p.classList.remove("oculto");
 
-document.getElementById("actividadHora")
-.textContent =
-actividadSeleccionada.hora || "-";
 
-document.getElementById("actividadNombre")
-.textContent =
-actividadSeleccionada.actividad || "-";
+  document.getElementById("actividadFecha")
+    .textContent =
+      actividadSeleccionada.fecha || "-";
 
-document.getElementById("actividadTipo")
-.textContent =
-actividadSeleccionada.tipo || "-";
 
-document.getElementById("actividadEstado")
-.textContent =
-actividadSeleccionada.estado || "-";
+  document.getElementById("actividadHora")
+    .textContent =
+      actividadSeleccionada.hora || "-";
+
+
+  document.getElementById("actividadNombre")
+    .textContent =
+      actividadSeleccionada.actividad || "-";
+
+
+  document.getElementById("actividadTipo")
+    .textContent =
+      actividadSeleccionada.tipo || "-";
+
+
+  document.getElementById("actividadEstado")
+    .textContent =
+      actividadSeleccionada.estado || "-";
 
 }
 
 
-/* ================================
+/* =================================================
+   INICIAR LECTOR
+================================================= */
+
+async function iniciarLector(){
+
+  if(lectorActivo)return;
+
+
+  if(!actividadSeleccionada){
+
+    mostrarResultado(
+
+      "⚠️<div class='jugador'>SELECCIONE UNA ACTIVIDAD</div>"+
+      "Primero seleccione y confirme una actividad.",
+
+      "diagnostico"
+
+    );
+
+    return;
+
+  }
+
+
+  try{
+
+    document.getElementById("estadoLector")
+      .innerHTML =
+      "🟡 INICIANDO CÁMARA...";
+
+
+    html5QrCode =
+      new Html5Qrcode("reader");
+
+
+    const cameras =
+      await Html5Qrcode.getCameras();
+
+
+    if(
+      !cameras ||
+      !cameras.length
+    ){
+
+      throw new Error(
+        "No se encontró ninguna cámara."
+      );
+
+    }
+
+
+    let camaraSeleccionada =
+      cameras[0].id;
+
+
+    const trasera =
+      cameras.find(function(c){
+
+        const n =
+          String(
+            c.label || ""
+          ).toLowerCase();
+
+
+        return (
+          n.includes("back") ||
+          n.includes("rear") ||
+          n.includes("trasera") ||
+          n.includes("environment")
+        );
+
+      });
+
+
+    if(trasera)
+      camaraSeleccionada =
+        trasera.id;
+
+
+    await html5QrCode.start(
+
+      camaraSeleccionada,
+
+      {
+        fps:10,
+        qrbox:{
+          width:250,
+          height:250
+        },
+        aspectRatio:1,
+        rememberLastUsedCamera:true
+      },
+
+      procesarQR,
+
+      function(){}
+
+    );
+
+
+    lectorActivo = true;
+
+    carnetBloqueado = false;
+
+
+    document.getElementById("btnIniciar")
+      .disabled = true;
+
+
+    document.getElementById("btnDetener")
+      .disabled = false;
+
+
+    document.getElementById("estadoLector")
+      .innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE CARNETS";
+
+
+    mostrarResultado(
+
+      "🟢<div class='jugador'>LECTOR ACTIVO</div>"+
+      "Escanee el carnet del jugador.",
+
+      "exito"
+
+    );
+
+
+  }catch(error){
+
+    console.error(error);
+
+
+    lectorActivo = false;
+
+    carnetBloqueado = false;
+
+
+    document.getElementById("btnIniciar")
+      .disabled = false;
+
+
+    document.getElementById("btnDetener")
+      .disabled = true;
+
+
+    document.getElementById("estadoLector")
+      .innerHTML =
+      "❌ NO SE PUDO INICIAR LA CÁMARA";
+
+
+    mostrarResultado(
+
+      "❌<div class='jugador'>ERROR</div>"+
+      escaparHTML(
+        error &&
+        error.message
+          ? error.message
+          : "Error desconocido."
+      ),
+
+      "error"
+
+    );
+
+  }
+
+}
+
+
+/* =================================================
+   DETENER LECTOR
+================================================= */
+
+async function detenerLector(){
+
+  try{
+
+    if(
+      html5QrCode &&
+      lectorActivo
+    ){
+
+      await html5QrCode.stop();
+
+    }
+
+  }catch(e){
+
+    console.error(e);
+
+  }
+
+
+  lectorActivo = false;
+
+  carnetBloqueado = false;
+
+
+  document.getElementById("btnIniciar")
+    .disabled =
+      !actividadSeleccionada;
+
+
+  document.getElementById("btnDetener")
+    .disabled = true;
+
+
+  document.getElementById("estadoLector")
+    .innerHTML =
+      actividadSeleccionada
+        ? "🟢 ACTIVIDAD CONFIRMADA — PUEDE INICIAR EL LECTOR"
+        : "🔴 LECTOR DETENIDO";
+
+
+  if(actividadSeleccionada){
+
+    mostrarResultado(
+
+      "🟢<div class='jugador'>LECTOR DETENIDO</div>"+
+      "La actividad continúa seleccionada."+
+      "<br><br>"+
+      "Puede iniciar nuevamente el lector.",
+
+      "diagnostico"
+
+    );
+
+  }else{
+
+    mostrarResultado("","oculto");
+
+  }
+
+}
+
+
+/* =================================================
+   PROCESAR QR
+================================================= */
+
+function procesarQR(decodedText){
+
+  if(
+    carnetBloqueado ||
+    !lectorActivo
+  )
+    return;
+
+
+  const texto =
+    String(
+      decodedText || ""
+    ).trim();
+
+
+  if(!texto)return;
+
+
+  /*
+     EL QR GENERAL NO SE UTILIZA
+     PARA REGISTRAR ASISTENCIA.
+
+     LA ACTIVIDAD YA DEBE ESTAR
+     CONFIRMADA EN PANTALLA.
+  */
+
+
+  const actividadQR =
+    extraerActividadDesdeQR(texto);
+
+
+  if(actividadQR){
+
+    carnetBloqueado = true;
+
+
+    mostrarResultado(
+
+      "ℹ️<div class='jugador'>QR DE ACTIVIDAD</div>"+
+      "Esta actividad ya se selecciona desde la pantalla del HUB.",
+
+      "diagnostico"
+
+    );
+
+
+    setTimeout(function(){
+
+      carnetBloqueado = false;
+
+      if(lectorActivo){
+
+        document.getElementById("estadoLector")
+          .innerHTML =
+          "🟢 LECTOR ACTIVO — ESCANEE CARNETS";
+
+      }
+
+    },TIEMPO_ENTRE_ESCANEOS);
+
+
+    return;
+
+  }
+
+
+  if(!actividadSeleccionada){
+
+    carnetBloqueado = true;
+
+
+    mostrarResultado(
+
+      "⚠️<div class='jugador'>SELECCIONE UNA ACTIVIDAD</div>"+
+      "Primero seleccione y confirme la actividad.",
+
+      "diagnostico"
+
+    );
+
+
+    setTimeout(function(){
+
+      carnetBloqueado = false;
+
+    },TIEMPO_ENTRE_ESCANEOS);
+
+
+    return;
+
+  }
+
+
+  registrarJugadorEnActividad(texto);
+
+}
+
+
+/* =================================================
    REGISTRAR JUGADOR
-================================ */
+================================================= */
 
 function registrarJugadorEnActividad(documento){
 
-if(!actividadSeleccionada){
+  if(!actividadSeleccionada){
 
-mostrarResultado(
-"⚠️<div class='jugador'>NO HAY ACTIVIDAD SELECCIONADA</div>",
-"error"
-);
+    mostrarResultado(
 
-return;
+      "⚠️<div class='jugador'>NO HAY ACTIVIDAD SELECCIONADA</div>",
+
+      "error"
+
+    );
+
+    return;
+
+  }
+
+
+  carnetBloqueado = true;
+
+
+  mostrarResultado(
+
+    "🔎<div class='jugador'>QR DETECTADO</div>"+
+
+    "<strong>Documento:</strong> "+
+    escaparHTML(documento)+
+
+    "<br><br>"+
+    "⏳ Procesando asistencia...",
+
+    "diagnostico"
+
+  );
+
+
+  document.getElementById("estadoLector")
+    .innerHTML =
+    "🟡 PROCESANDO CARNET...";
+
+
+  contadorJSONP++;
+
+
+  const callback =
+    "bufalosAsistencia_"+
+    Date.now()+
+    "_"+
+    contadorJSONP;
+
+
+  let terminado = false;
+
+  let script = null;
+
+
+  const limpiar = () =>
+    limpiarJSONP(
+      callback,
+      script
+    );
+
+
+  window[callback] = function(r){
+
+    if(terminado)return;
+
+    terminado = true;
+
+
+    try{
+
+      if(!r){
+
+        mostrarErrorRespuesta();
+
+        return;
+
+      }
+
+
+      procesarRespuestaAsistencia(
+        r,
+        documento
+      );
+
+    }finally{
+
+      limpiar();
+
+    }
+
+  };
+
+
+  script =
+    document.createElement("script");
+
+
+  script.src =
+    APPS_SCRIPT_URL+
+    "?accion=registrarAsistenciaActividad"+
+    "&documento="+
+    encodeURIComponent(documento)+
+    "&id="+
+    encodeURIComponent(
+      actividadSeleccionada.actividadId
+    )+
+    "&callback="+
+    encodeURIComponent(callback)+
+    "&_="+
+    Date.now();
+
+
+  script.onerror = function(){
+
+    if(terminado)return;
+
+    terminado = true;
+
+
+    mostrarResultado(
+
+      "❌<div class='jugador'>NO SE RECIBIÓ CONFIRMACIÓN</div>"+
+      "El navegador no recibió respuesta del servidor."+
+      "<br><br>"+
+      "Por seguridad, el lector fue detenido.",
+
+      "error"
+
+    );
+
+
+    detenerLector();
+
+    limpiar();
+
+  };
+
+
+  script._bufalosTimeout =
+    setTimeout(function(){
+
+      if(terminado)return;
+
+      terminado = true;
+
+
+      mostrarResultado(
+
+        "⚠️<div class='jugador'>SIN CONFIRMACIÓN</div>"+
+        "El sistema tardó demasiado en responder."+
+        "<br><br>"+
+        "Por seguridad, el lector fue detenido."+
+        "<br>"+
+        "Revise la hoja Asistencia antes de continuar.",
+
+        "error"
+
+      );
+
+
+      detenerLector();
+
+      limpiar();
+
+    },15000);
+
+
+  document.body.appendChild(script);
 
 }
 
-carnetBloqueado = true;
 
-mostrarResultado(
-"🔎<div class='jugador'>QR DETECTADO</div>"+
-"<strong>Documento:</strong> "+
-escaparHTML(documento)+
-"<br><br>⏳ Procesando asistencia...",
-"diagnostico"
-);
-
-document.getElementById("estadoLector").innerHTML =
-"🟡 PROCESANDO CARNET...";
-
-contadorJSONP++;
-
-const callback =
-"bufalosAsistencia_"+
-Date.now()+
-"_"+contadorJSONP;
-
-let terminado = false;
-let script = null;
-
-const limpiar = () =>
-limpiarJSONP(callback,script);
-
-window[callback] = r => {
-
-if(terminado)return;
-
-terminado = true;
-
-try{
-
-if(!r){
-
-mostrarErrorRespuesta();
-return;
-
-}
-
-procesarRespuestaAsistencia(r,documento);
-
-}finally{
-
-limpiar();
-
-}
-
-};
-
-script = document.createElement("script");
-
-script.src =
-APPS_SCRIPT_URL+
-"?accion=registrarAsistenciaActividad"+
-"&documento="+encodeURIComponent(documento)+
-"&id="+encodeURIComponent(
-actividadSeleccionada.actividadId
-)+
-"&callback="+encodeURIComponent(callback)+
-"&_="+Date.now();
-
-script.onerror = ()=>{
-
-if(terminado)return;
-
-terminado = true;
-
-mostrarResultado(
-"❌<div class='jugador'>NO SE RECIBIÓ CONFIRMACIÓN</div>"+
-"El registro pudo haberse enviado, pero el navegador no recibió la respuesta."+
-"<br><br>Por seguridad, el lector fue detenido.",
-"error"
-);
-
-detenerLector();
-
-limpiar();
-
-};
-
-script._bufalosTimeout =
-setTimeout(()=>{
-
-if(terminado)return;
-
-terminado = true;
-
-mostrarResultado(
-"⚠️<div class='jugador'>SIN CONFIRMACIÓN</div>"+
-"El sistema tardó demasiado en responder."+
-"<br><br>Por seguridad, el lector fue detenido."+
-"<br>Revise la hoja Asistencia antes de continuar.",
-"error"
-);
-
-detenerLector();
-
-limpiar();
-
-},15000);
-
-document.body.appendChild(script);
-
-}
-
-
-/* ================================
+/* =================================================
    RESPUESTA ASISTENCIA
-================================ */
+================================================= */
 
-function procesarRespuestaAsistencia(r,documento){
-
-const estado =
-String(r.estado || "").toUpperCase();
-
-if(r.ok === true && estado === "REGISTRADO"){
-
-escaneosRegistrados++;
-
-document.getElementById("contador").innerHTML =
-"Registros confirmados: "+
-escaneosRegistrados;
-
-const j = r.jugador || {};
-
-const nombre =
-j.nombre ||
-r.nombre ||
-"";
-
-mostrarResultado(
-"🟢<div class='jugador'>ASISTENCIA REGISTRADA</div>"+
-(nombre ?
-"<strong>"+escaparHTML(nombre)+"</strong><br><br>" :
-"")+
-"<strong>Documento:</strong> "+
-escaparHTML(documento)+
-"<br><br>"+
-"<strong>Actividad:</strong> "+
-escaparHTML(
-actividadSeleccionada.actividad
-),
-"exito"
-);
-
-prepararSiguienteEscaneo();
-
-return;
-
-}
-
-
-if(
-r.duplicado === true ||
-estado === "DUPLICADO"
+function procesarRespuestaAsistencia(
+  r,
+  documento
 ){
 
-const n =
-r.nombre ||
-(r.jugador && r.jugador.nombre) ||
-"";
+  const estado =
+    String(
+      r.estado || ""
+    ).toUpperCase();
 
-mostrarResultado(
-"🟡<div class='jugador'>DUPLICADO</div>"+
-(n ?
-"<strong>"+escaparHTML(n)+"</strong><br><br>" :
-"")+
-escaparHTML(
-r.mensaje ||
-"Este jugador ya tiene registrada la asistencia para esta actividad."
-),
-"duplicado"
-);
 
-prepararSiguienteEscaneo();
+  if(
+    r.ok === true &&
+    estado === "REGISTRADO"
+  ){
 
-return;
+    escaneosRegistrados++;
+
+
+    document.getElementById("contador")
+      .innerHTML =
+      "Registros confirmados: "+
+      escaneosRegistrados;
+
+
+    const j =
+      r.jugador || {};
+
+
+    const nombre =
+      j.nombre ||
+      r.nombre ||
+      "";
+
+
+    mostrarResultado(
+
+      "🟢<div class='jugador'>ASISTENCIA REGISTRADA</div>"+
+
+      (
+        nombre
+          ?
+          "<strong>"+
+          escaparHTML(nombre)+
+          "</strong><br><br>"
+          :
+          ""
+      )+
+
+      "<strong>Documento:</strong> "+
+      escaparHTML(documento)+
+
+      "<br><br>"+
+
+      "<strong>Actividad:</strong> "+
+      escaparHTML(
+        actividadSeleccionada.actividad
+      ),
+
+      "exito"
+
+    );
+
+
+    prepararSiguienteEscaneo();
+
+    return;
+
+  }
+
+
+  if(
+    r.duplicado === true ||
+    estado === "DUPLICADO"
+  ){
+
+    const n =
+      r.nombre ||
+      (
+        r.jugador &&
+        r.jugador.nombre
+      ) ||
+      "";
+
+
+    mostrarResultado(
+
+      "🟡<div class='jugador'>DUPLICADO</div>"+
+
+      (
+        n
+          ?
+          "<strong>"+
+          escaparHTML(n)+
+          "</strong><br><br>"
+          :
+          ""
+      )+
+
+      escaparHTML(
+        r.mensaje ||
+        "Este jugador ya tiene registrada la asistencia para esta actividad."
+      ),
+
+      "duplicado"
+
+    );
+
+
+    prepararSiguienteEscaneo();
+
+    return;
+
+  }
+
+
+  if(
+    estado === "NO_ENCONTRADO"
+  ){
+
+    mostrarResultado(
+
+      "🔴<div class='jugador'>JUGADOR NO ENCONTRADO</div>"+
+
+      "<strong>Documento:</strong> "+
+      escaparHTML(documento)+
+
+      "<br><br>"+
+
+      escaparHTML(
+        r.mensaje ||
+        "No existe un jugador con este documento."
+      ),
+
+      "error"
+
+    );
+
+
+    prepararSiguienteEscaneo();
+
+    return;
+
+  }
+
+
+  mostrarResultado(
+
+    "❌<div class='jugador'>ERROR EN EL REGISTRO</div>"+
+
+    escaparHTML(
+      r.mensaje ||
+      "El sistema devolvió una respuesta inesperada."
+    )+
+
+    "<br><br>"+
+    "Por seguridad, el lector fue detenido.",
+
+    "error"
+
+  );
+
+
+  detenerLector();
 
 }
 
 
-if(estado === "NO_ENCONTRADO"){
-
-mostrarResultado(
-"🔴<div class='jugador'>JUGADOR NO ENCONTRADO</div>"+
-"<strong>Documento:</strong> "+
-escaparHTML(documento)+
-"<br><br>"+
-escaparHTML(
-r.mensaje ||
-"No existe un jugador con este documento."
-),
-"error"
-);
-
-prepararSiguienteEscaneo();
-
-return;
-
-}
-
-
-mostrarResultado(
-"❌<div class='jugador'>ERROR EN EL REGISTRO</div>"+
-escaparHTML(
-r.mensaje ||
-"El sistema devolvió una respuesta inesperada."
-)+
-"<br><br>Por seguridad, el lector fue detenido.",
-"error"
-);
-
-detenerLector();
-
-}
-
-
-/* ================================
+/* =================================================
    SIGUIENTE ESCANEO
-================================ */
+================================================= */
 
 function prepararSiguienteEscaneo(){
 
-if(!lectorActivo)return;
+  if(!lectorActivo)return;
 
-document.getElementById("estadoLector").innerHTML =
-"🟢 REGISTRO PROCESADO — PREPARE SIGUIENTE CARNET";
 
-setTimeout(()=>{
+  document.getElementById("estadoLector")
+    .innerHTML =
+    "🟢 REGISTRO PROCESADO — PREPARE SIGUIENTE CARNET";
 
-if(!lectorActivo)return;
 
-carnetBloqueado = false;
+  setTimeout(function(){
 
-mostrarResultado("","oculto");
+    if(!lectorActivo)return;
 
-document.getElementById("estadoLector").innerHTML =
-"🟢 LECTOR ACTIVO — ESCANEE SIGUIENTE CARNET";
 
-},TIEMPO_ENTRE_ESCANEOS);
+    carnetBloqueado = false;
+
+
+    mostrarResultado(
+      "",
+      "oculto"
+    );
+
+
+    document.getElementById("estadoLector")
+      .innerHTML =
+      "🟢 LECTOR ACTIVO — ESCANEE SIGUIENTE CARNET";
+
+  },TIEMPO_ENTRE_ESCANEOS);
 
 }
 
 
-/* ================================
+/* =================================================
    CAMBIAR ACTIVIDAD
-================================ */
+================================================= */
 
-function cambiarActividad(){
+async function cambiarActividad(){
 
-actividadSeleccionada = null;
+  if(lectorActivo){
 
-carnetBloqueado = false;
-procesandoActividad = false;
-consultandoActividades = false;
+    try{
 
-document.getElementById("actividadSeleccionada")
-.classList.add("oculto");
+      if(html5QrCode)
+        await html5QrCode.stop();
 
-mostrarResultado(
-"🔄<div class='jugador'>CAMBIAR ACTIVIDAD</div>"+
-"Seleccione la nueva actividad para continuar.",
-"diagnostico"
-);
+    }catch(e){
 
-if(lectorActivo){
+      console.error(e);
 
-cargarActividades();
+    }
 
-}else{
+  }
 
-document.getElementById("estadoLector").innerHTML =
-"🟡 INICIE EL LECTOR PARA SELECCIONAR ACTIVIDAD";
+
+  lectorActivo = false;
+
+  carnetBloqueado = false;
+
+  actividadSeleccionada = null;
+
+  actividadIndiceSeleccionada = -1;
+
+
+  document.getElementById("btnIniciar")
+    .disabled = true;
+
+
+  document.getElementById("btnDetener")
+    .disabled = true;
+
+
+  document.getElementById("btnCambiar")
+    .classList.add("oculto");
+
+
+  document.getElementById("actividadSeleccionada")
+    .classList.add("oculto");
+
+
+  document.getElementById("panelActividades")
+    .classList.remove("oculto");
+
+
+  document.getElementById("estadoLector")
+    .innerHTML =
+    "🟡 CARGANDO ACTIVIDADES...";
+
+
+  mostrarResultado(
+    "",
+    "oculto"
+  );
+
+
+  cargarActividades();
 
 }
 
-}
 
-
-/* ================================
+/* =================================================
    ERROR ACTIVIDADES
-================================ */
+================================================= */
 
 function mostrarErrorActividades(mensaje){
 
-mostrarResultado(
-"❌<div class='jugador'>NO SE PUDIERON CONSULTAR LAS ACTIVIDADES</div>"+
-escaparHTML(
-mensaje ||
-"El servidor no devolvió una respuesta válida."
-),
-"error"
-);
+  consultandoActividades = false;
 
-document.getElementById("estadoLector").innerHTML =
-"🔴 ERROR CONSULTANDO ACTIVIDADES";
 
-consultandoActividades = false;
+  document.getElementById("selectorActividades")
+    .innerHTML =
+
+    "<div class='resultado error'>"+
+
+    "❌<div class='jugador'>"+
+    "NO SE PUDIERON CONSULTAR LAS ACTIVIDADES"+
+    "</div>"+
+
+    escaparHTML(
+      mensaje ||
+      "El servidor no devolvió una respuesta válida."
+    )+
+
+    "<br><br>"+
+
+    "<button "+
+    "class='btn-cambiar' "+
+    "onclick='cargarActividades()'>"+
+
+    "🔄 INTENTAR NUEVAMENTE"+
+
+    "</button>"+
+
+    "</div>";
+
+
+  document.getElementById("estadoLector")
+    .innerHTML =
+    "🔴 ERROR CONSULTANDO ACTIVIDADES";
+
+
+  document.getElementById("btnIniciar")
+    .disabled = true;
 
 }
 
 
-/* ================================
+/* =================================================
    QR ACTIVIDAD
-================================ */
+================================================= */
 
 function extraerActividadDesdeQR(texto){
 
-try{
+  try{
 
-const u = new URL(texto);
+    const u =
+      new URL(texto);
 
-const accion =
-String(
-u.searchParams.get("accion") || ""
-)
-.trim()
-.toLowerCase();
 
-const id =
-String(
-u.searchParams.get("id") || ""
-).trim();
+    const accion =
+      String(
+        u.searchParams.get(
+          "accion"
+        ) ||
+        ""
+      )
+      .trim()
+      .toLowerCase();
 
-if(
-accion !== "actividadqr" ||
-!id
-)
-return null;
 
-return {
-actividadId:id
-};
+    const id =
+      String(
+        u.searchParams.get(
+          "id"
+        ) ||
+        ""
+      )
+      .trim();
 
-}catch(e){
 
-return null;
+    if(
+      accion !== "actividadqr" ||
+      !id
+    )
+      return null;
+
+
+    return {
+      actividadId:id
+    };
+
+
+  }catch(e){
+
+    return null;
+
+  }
 
 }
 
-}
 
-
-/* ================================
-   ERRORES
-================================ */
+/* =================================================
+   ERROR RESPUESTA
+================================================= */
 
 function mostrarErrorRespuesta(){
 
-mostrarResultado(
-"❌<div class='jugador'>NO SE RECIBIÓ CONFIRMACIÓN</div>"+
-"El servidor no devolvió una respuesta válida."+
-"<br><br>Por seguridad, el lector fue detenido.",
-"error"
-);
+  mostrarResultado(
 
-detenerLector();
+    "❌<div class='jugador'>NO SE RECIBIÓ CONFIRMACIÓN</div>"+
+    "El servidor no devolvió una respuesta válida."+
+    "<br><br>"+
+    "Por seguridad, el lector fue detenido.",
+
+    "error"
+
+  );
+
+
+  detenerLector();
 
 }
 
 
-/* ================================
+/* =================================================
    JSONP
-================================ */
+================================================= */
 
-function limpiarJSONP(callback,script){
+function limpiarJSONP(
+  callback,
+  script
+){
 
-try{
+  try{
 
-if(
-script &&
-script._bufalosTimeout
-)
-clearTimeout(
-script._bufalosTimeout
-);
+    if(
+      script &&
+      script._bufalosTimeout
+    ){
 
-}catch(e){}
+      clearTimeout(
+        script._bufalosTimeout
+      );
 
-try{
+    }
 
-if(
-script &&
-script.parentNode
-)
-script.parentNode.removeChild(script);
+  }catch(e){}
 
-}catch(e){}
 
-try{
+  try{
 
-delete window[callback];
+    if(
+      script &&
+      script.parentNode
+    ){
 
-}catch(e){
+      script.parentNode.removeChild(
+        script
+      );
 
-window[callback] = undefined;
+    }
+
+  }catch(e){}
+
+
+  try{
+
+    delete window[callback];
+
+  }catch(e){
+
+    window[callback] =
+      undefined;
+
+  }
 
 }
 
-}
 
-
-/* ================================
+/* =================================================
    RESULTADO
-================================ */
+================================================= */
 
-function mostrarResultado(contenido,tipo){
+function mostrarResultado(
+  contenido,
+  tipo
+){
 
-const e =
-document.getElementById("resultado");
+  const e =
+    document.getElementById(
+      "resultado"
+    );
 
-e.className =
-"resultado "+tipo;
 
-e.innerHTML = contenido;
+  e.className =
+    "resultado "+
+    tipo;
 
-if(tipo === "oculto")
-e.classList.add("oculto");
-else
-e.classList.remove("oculto");
+
+  e.innerHTML =
+    contenido;
+
+
+  if(tipo === "oculto"){
+
+    e.classList.add(
+      "oculto"
+    );
+
+  }else{
+
+    e.classList.remove(
+      "oculto"
+    );
+
+  }
 
 }
 
 
-/* ================================
+/* =================================================
    SEGURIDAD HTML
-================================ */
+================================================= */
 
 function escaparHTML(texto){
 
-const d =
-document.createElement("div");
+  const d =
+    document.createElement(
+      "div"
+    );
 
-d.textContent =
-String(texto || "");
 
-return d.innerHTML;
+  d.textContent =
+    String(
+      texto || ""
+    );
+
+
+  return d.innerHTML;
 
 }
 
